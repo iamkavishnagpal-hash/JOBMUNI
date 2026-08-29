@@ -63,6 +63,13 @@ export interface Job {
   compensation_tier?: "PREMIUM" | "STRONG" | "ACCEPTABLE" | "LOW" | "UNKNOWN" | string;
   total_compensation_score?: number;
   compensation_json?: any;
+  priority_score?: number;
+  urgency_score?: number;
+  actionability?: "READY_TO_ACT" | "NEEDS_RESUME" | "NEEDS_EVIDENCE" | "NEEDS_RECRUITER_OUTREACH" | "NEEDS_REVIEW" | "BLOCKED" | "EXPIRED" | string;
+  effort_level?: "LOW" | "MEDIUM" | "HIGH" | string;
+  recommended_action?: "APPLY" | "CONTACT_RECRUITER" | "PREPARE_RESUME" | "REVIEW" | "SKIP" | string;
+  lifecycle_status?: string;
+  chanakya_json?: any;
   created_at: string;
   skills: JobSkill[];
 }

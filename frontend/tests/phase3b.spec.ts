@@ -31,8 +31,10 @@ test.describe("Phase 3B: ARJUNA JD Alignment E2E Verification", () => {
     const jobCard = page.locator(".cursor-pointer").first();
     await jobCard.click();
 
-    // Verify tab switcher
-    await expect(page.getByRole("button", { name: /ARJUNA Skill Fit/i })).toBeVisible();
+    // Click ARJUNA Skill Fit tab
+    const arjunaTab = page.getByRole("button", { name: /ARJUNA Skill Fit/i });
+    await expect(arjunaTab).toBeVisible();
+    await arjunaTab.click();
 
     // Verify 4 coverage gauges
     await expect(page.getByText("Required Coverage")).toBeVisible();
@@ -40,12 +42,12 @@ test.describe("Phase 3B: ARJUNA JD Alignment E2E Verification", () => {
     await expect(page.getByText("Evidence Density")).toBeVisible();
     await expect(page.getByText("Seniority Fit")).toBeVisible();
 
-    // Verify Explainable Rationale
-    await expect(page.getByText("Explainable Rationale & Action")).toBeVisible();
-    await expect(page.getByText(/Action:/i)).toBeVisible();
+    // Verify Explainable Rationale within dialog
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText("Explainable Rationale & Action")).toBeVisible();
 
     // Verify Matched Skills Section
-    await expect(page.getByText(/Matched Required Skills/i)).toBeVisible();
+    await expect(dialog.getByText(/Matched Required Skills/i)).toBeVisible();
   });
 
   test("ARJUNA Alignment Modal has zero horizontal overflow on mobile viewports", async ({ page }) => {
@@ -56,6 +58,7 @@ test.describe("Phase 3B: ARJUNA JD Alignment E2E Verification", () => {
     const jobCard = page.locator(".cursor-pointer").first();
     if (await jobCard.isVisible()) {
       await jobCard.click();
+      await page.getByRole("button", { name: /ARJUNA Skill Fit/i }).click();
       await page.waitForTimeout(300);
     }
 

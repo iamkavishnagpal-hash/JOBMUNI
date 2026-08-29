@@ -64,6 +64,15 @@ export const api = {
     fetchJson<any>(`/jobs/${jobId}/compensation`, {
       method: "POST",
     }),
+  getPrioritizedJobs: (params?: { tier_filter?: string; action_filter?: string }) => {
+    const qs = new URLSearchParams(params as Record<string, string>).toString();
+    return fetchJson<Job[]>(`/jobs/prioritized${qs ? `?${qs}` : ""}`);
+  },
+  getJobPriority: (jobId: string) => fetchJson<any>(`/jobs/${jobId}/priority`),
+  evaluateJobPriority: (jobId: string) =>
+    fetchJson<any>(`/jobs/${jobId}/priority`, {
+      method: "POST",
+    }),
   getCompensationPolicy: () => fetchJson<any>("/evidence-bank/candidate/compensation-policy"),
   updateCompensationPolicy: (data: any) =>
     fetchJson<any>("/evidence-bank/candidate/compensation-policy", {

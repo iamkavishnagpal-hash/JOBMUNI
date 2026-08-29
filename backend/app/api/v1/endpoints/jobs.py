@@ -5,7 +5,15 @@ from sqlalchemy import select, desc, func, or_
 from app.core.database import get_db
 from app.models.job import Job, JobSkill, Company
 from app.models.scoring_config import ScoringConfig
-from app.schemas.job import JobResponse, JobCreate, JobManualParseRequest, JobPaginationResponse, JobAlignmentResponse, JobCompensationResponse
+from app.schemas.job import (
+    JobResponse,
+    JobCreate,
+    JobManualParseRequest,
+    JobPaginationResponse,
+    JobAlignmentResponse,
+    JobCompensationResponse,
+    JobPriorityResponse,
+)
 from app.services.jd_parser import JDParser
 from app.services.scoring_service import OpportunityScorer
 from app.services.verification_service import YamaVerificationService
@@ -24,7 +32,7 @@ async def list_jobs(
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db)
 ):
-    query = select(Job).order_by(desc(Job.final_score), desc(Job.created_at))
+    query = select(Job).order_by(desc(Job.priority_score), desc(Job.final_score), desc(Job.created_at))
     
     if status_filter:
         query = query.where(Job.status == status_filter)
@@ -48,19 +56,38 @@ async def list_jobs(
     result = await db.execute(query)
     return result.scalars().all()
 
+@router.get("/prioritized", response_model=List[JobResponse])
+async def list_prioritized_jobs(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    tier_filter: Optional[str] = None,
+    action_filter: Optional[str] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns ranked opportunities ordered by CHANAKYA priority score and urgency.
+    """
+    query = select(Job).where(Job.status == "ACTIVE").order_by(desc(Job.priority_score), desc(Job.urgency_score), desc(Job.created_at))
+    if tier_filter:
+        query = query.where(Job.priority_tier == tier_filter)
+    if action_filter:
+        query = query.where(Job.recommended_action == action_filter)
+
+    query = query.limit(limit).offset(offset)
+    result = await db.execute(query)
+    return result.scalars().all()
+
 @router.post("/manual-parse", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
 async def manual_parse_job(
     request: JobManualParseRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    # Parse with deterministic JDParser
     parsed = JDParser.parse(
         title=request.title,
         raw_description=request.raw_text,
         location_hint=request.location,
     )
 
-    # Find or create company
     comp_q = await db.execute(select(Company).where(Company.name.ilike(request.company_name)))
     company = comp_q.scalars().first()
     if not company:
@@ -68,7 +95,6 @@ async def manual_parse_job(
         db.add(company)
         await db.flush()
 
-    # Calculate multi-factor score
     score_res = OpportunityScorer.calculate_score(
         title=request.title,
         raw_description=request.raw_text,
@@ -162,7 +188,6 @@ async def get_job_alignment_endpoint(job_id: str, db: AsyncSession = Depends(get
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # If alignment is already cached in alignment_json and valid, return it; otherwise evaluate and persist
     if job.alignment_json and job.alignment_json.get("matched_required") is not None:
         return job.alignment_json
 
@@ -187,7 +212,6 @@ async def get_job_compensation_endpoint(job_id: str, db: AsyncSession = Depends(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # If compensation is already cached in compensation_json and valid, return it; otherwise evaluate and persist
     if job.compensation_json and job.compensation_json.get("compensation_tier") is not None:
         return job.compensation_json
 
@@ -204,4 +228,26 @@ async def evaluate_job_compensation_endpoint(job_id: str, db: AsyncSession = Dep
         raise HTTPException(status_code=404, detail="Job not found")
     return comp_res
 
+@router.get("/{job_id}/priority", response_model=JobPriorityResponse)
+async def get_job_priority_endpoint(job_id: str, db: AsyncSession = Depends(get_db)):
+    from app.services.chanakya_engine import chanakya_engine
+    result = await db.execute(select(Job).where(Job.id == job_id))
+    job = result.scalars().first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
 
+    if job.chanakya_json and job.chanakya_json.get("priority_score") is not None:
+        return job.chanakya_json
+
+    prio_res = await chanakya_engine.evaluate_and_persist_job_priority(db, job_id)
+    if not prio_res:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return prio_res
+
+@router.post("/{job_id}/priority", response_model=JobPriorityResponse)
+async def evaluate_job_priority_endpoint(job_id: str, db: AsyncSession = Depends(get_db)):
+    from app.services.chanakya_engine import chanakya_engine
+    prio_res = await chanakya_engine.evaluate_and_persist_job_priority(db, job_id)
+    if not prio_res:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return prio_res

@@ -24,7 +24,11 @@ import {
   XCircle,
   RefreshCw,
   HelpCircle,
-  Layers,
+  Zap,
+  ArrowRight,
+  Clock,
+  Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function JobsPage() {
@@ -32,10 +36,12 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [tierFilter, setTierFilter] = useState<string>("ALL");
 
   // Selected job for Intelligence Modal
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [activeTab, setActiveTab] = useState<"ALIGNMENT" | "COMPENSATION">("ALIGNMENT");
+  const [activeTab, setActiveTab] = useState<"PRIORITY" | "ALIGNMENT" | "COMPENSATION">("PRIORITY");
+  const [priorityData, setPriorityData] = useState<any | null>(null);
   const [alignmentData, setAlignmentData] = useState<any | null>(null);
   const [compensationData, setCompensationData] = useState<any | null>(null);
   const [intelLoading, setIntelLoading] = useState(false);
@@ -49,10 +55,13 @@ export default function JobsPage() {
   const loadJobs = async () => {
     try {
       setLoading(true);
-      const data = await api.getJobs();
+      const data = await api.getPrioritizedJobs(tierFilter !== "ALL" ? { tier_filter: tierFilter } : undefined);
       setJobs(data);
     } catch (err) {
       console.error("Failed to load jobs", err);
+      // Fallback
+      const fb = await api.getJobs();
+      setJobs(fb);
     } finally {
       setLoading(false);
     }
@@ -60,17 +69,19 @@ export default function JobsPage() {
 
   useEffect(() => {
     loadJobs();
-  }, []);
+  }, [tierFilter]);
 
   const openIntelModal = async (job: Job) => {
     setSelectedJob(job);
-    setActiveTab("ALIGNMENT");
+    setActiveTab("PRIORITY");
     try {
       setIntelLoading(true);
-      const [align, comp] = await Promise.all([
+      const [prio, align, comp] = await Promise.all([
+        api.getJobPriority(job.id),
         api.getJobAlignment(job.id),
         api.getJobCompensation(job.id),
       ]);
+      setPriorityData(prio);
       setAlignmentData(align);
       setCompensationData(comp);
     } catch (err) {
@@ -84,10 +95,12 @@ export default function JobsPage() {
     if (!selectedJob) return;
     try {
       setIntelLoading(true);
-      const [align, comp] = await Promise.all([
+      const [prio, align, comp] = await Promise.all([
+        api.evaluateJobPriority(selectedJob.id),
         api.evaluateJobAlignment(selectedJob.id),
         api.evaluateJobCompensation(selectedJob.id),
       ]);
+      setPriorityData(prio);
       setAlignmentData(align);
       setCompensationData(comp);
       await loadJobs();
@@ -124,14 +137,17 @@ export default function JobsPage() {
 
   const getPriorityBadge = (tier: string) => {
     switch (tier) {
+      case "CRITICAL":
       case "ACT_NOW":
-        return <Badge variant="danger"><Flame className="w-3 h-3 mr-1 inline" />ACT NOW</Badge>;
+        return <Badge variant="danger" className="font-bold"><Flame className="w-3 h-3 mr-1 inline" />CRITICAL PRIORITY</Badge>;
       case "HIGH":
-        return <Badge variant="success">HIGH FIT</Badge>;
+        return <Badge variant="success" className="font-bold">HIGH PRIORITY</Badge>;
       case "MEDIUM":
         return <Badge variant="indigo">MEDIUM</Badge>;
+      case "LOW":
+        return <Badge variant="outline" className="text-gray-400">LOW</Badge>;
       default:
-        return <Badge variant="outline">{tier}</Badge>;
+        return <Badge variant="outline" className="text-gray-500">{tier}</Badge>;
     }
   };
 
@@ -163,11 +179,26 @@ export default function JobsPage() {
     }
   };
 
+  const getActionBadge = (action: string) => {
+    switch (action) {
+      case "APPLY":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">⚡ Apply Direct</span>;
+      case "CONTACT_RECRUITER":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-mono font-bold">🎯 Outreach Recruiter</span>;
+      case "PREPARE_RESUME":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold">📄 Tailor Resume</span>;
+      case "REVIEW":
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-500/20 text-gray-300 text-[10px] font-mono font-bold">🔍 Review Details</span>;
+      default:
+        return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-mono font-bold">🚫 Skip Role</span>;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Header
-        title="Job Radar & Career Intelligence"
-        subtitle="Live Senior BI & Analytics opportunities evaluated by ARJUNA (Skill Match) and KUBERA (Compensation Intelligence)"
+        title="Job Radar & Prioritization Engine"
+        subtitle="Ranked Senior BI & Analytics opportunities evaluated deterministically by CHANAKYA, ARJUNA, and KUBERA"
         actionButton={{
           label: "Ingest Opportunity (Paste JD)",
           onClick: () => setIsModalOpen(true),
@@ -175,13 +206,30 @@ export default function JobsPage() {
         }}
       />
 
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-2 border-b border-border-subtle pb-3">
+        {["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map((tier) => (
+          <button
+            key={tier}
+            onClick={() => setTierFilter(tier)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
+              tierFilter === tier
+                ? "bg-accent-indigo text-white font-bold shadow-sm"
+                : "bg-surface-100 text-gray-400 hover:text-white"
+            }`}
+          >
+            {tier === "ALL" ? "All Ranked" : `${tier} Priority`}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
-        <div className="p-12 text-center text-gray-400 font-mono text-xs">Loading opportunities from database...</div>
+        <div className="p-12 text-center text-gray-400 font-mono text-xs">Loading prioritized opportunities from database...</div>
       ) : jobs.length === 0 ? (
         <EmptyState
           icon={Radar}
-          title="No Opportunities Ingested Yet"
-          description="Job Radar continuously monitors configured sources. Ingest your first Senior BI / Analytics opportunity by pasting a job description."
+          title="No Opportunities Found"
+          description="No opportunities match the selected priority filter. Ingest new opportunities or clear the filter."
           actionLabel="Ingest Job Description"
           onAction={() => setIsModalOpen(true)}
         />
@@ -205,7 +253,7 @@ export default function JobsPage() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className="text-xl font-bold font-mono text-emerald-400">
-                      {job.final_score}
+                      {job.priority_score || job.final_score}
                       <span className="text-xs text-gray-500 font-normal">/100</span>
                     </span>
                     {getPriorityBadge(job.priority_tier)}
@@ -225,6 +273,13 @@ export default function JobsPage() {
                     <span>{getCompTierBadge(job.compensation_tier)}</span>
                   )}
                 </div>
+
+                {job.recommended_action && (
+                  <div className="mb-3 p-2 rounded bg-surface-200 border border-border-subtle flex items-center justify-between">
+                    <span className="text-[11px] text-gray-400 font-mono">Next Best Action:</span>
+                    {getActionBadge(job.recommended_action)}
+                  </div>
+                )}
 
                 {job.skills && job.skills.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-4">
@@ -253,27 +308,39 @@ export default function JobsPage() {
         </div>
       )}
 
-      {/* Intelligence Modal (ARJUNA & KUBERA) */}
+      {/* Intelligence Modal (CHANAKYA, ARJUNA, KUBERA) */}
       {selectedJob && (
         <Modal
           isOpen={!!selectedJob}
           onClose={() => {
             setSelectedJob(null);
+            setPriorityData(null);
             setAlignmentData(null);
             setCompensationData(null);
           }}
           title={`${selectedJob.title} — ${selectedJob.company_name}`}
           maxWidth="xl"
         >
-          {intelLoading || !alignmentData || !compensationData ? (
+          {intelLoading || !priorityData || !alignmentData || !compensationData ? (
             <div className="p-8 text-center text-gray-400 font-mono text-xs">
-              Calculating evidence-grounded intelligence...
+              Calculating evidence-grounded career intelligence...
             </div>
           ) : (
             <div className="space-y-5 text-xs">
               {/* Top Navigation Switcher */}
-              <div className="flex items-center justify-between border-b border-border-subtle pb-3">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between border-b border-border-subtle pb-3 gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    onClick={() => setActiveTab("PRIORITY")}
+                    className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all ${
+                      activeTab === "PRIORITY"
+                        ? "bg-accent-indigo text-white shadow-sm font-semibold"
+                        : "bg-surface-100 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>CHANAKYA Priority</span>
+                  </button>
                   <button
                     onClick={() => setActiveTab("ALIGNMENT")}
                     className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all ${
@@ -310,7 +377,94 @@ export default function JobsPage() {
                 </Button>
               </div>
 
-              {/* TAB 1: ARJUNA ALIGNMENT */}
+              {/* TAB 1: CHANAKYA PRIORITY */}
+              {activeTab === "PRIORITY" && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3.5 rounded-lg bg-surface-100 border border-border-subtle">
+                    <div>
+                      <div className="font-bold text-white text-sm">CHANAKYA Decision & Prioritization</div>
+                      <div className="text-gray-400 text-[11px]">{priorityData.company_name}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getPriorityBadge(priorityData.priority_tier)}
+                    </div>
+                  </div>
+
+                  {/* 4 Prioritization Gauges */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-xl font-bold font-mono text-emerald-400">{priorityData.priority_score}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Priority Score</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-xl font-bold font-mono text-amber-400">{priorityData.urgency_score}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Urgency (Velocity)</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-xs font-bold font-mono text-cyan-400 truncate">{priorityData.actionability?.replace(/_/g, " ")}</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Actionability</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-xs font-bold font-mono text-accent-indigo">{priorityData.effort_level} EFFORT</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Execution Effort</div>
+                    </div>
+                  </div>
+
+                  {/* Next Best Action Banner */}
+                  <div className="p-3.5 rounded-lg bg-accent-indigo/10 border border-accent-indigo/30 space-y-1.5">
+                    <div className="font-semibold text-accent-indigo flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Zap className="w-4 h-4" /> Recommended Next Action
+                      </span>
+                      {getActionBadge(priorityData.recommended_action)}
+                    </div>
+                    <p className="text-gray-300 text-[11px] leading-relaxed">
+                      {priorityData.reasoning?.action_rationale}
+                    </p>
+                  </div>
+
+                  {/* Why this job is ranked here */}
+                  <div className="p-3.5 rounded-lg bg-surface-100 border border-border-subtle space-y-2">
+                    <div className="font-semibold text-white text-xs flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      Why Ranked Here
+                    </div>
+                    <p className="text-gray-300 leading-relaxed">{priorityData.reasoning?.why_ranked_here}</p>
+
+                    {/* Positive Factors */}
+                    {priorityData.positive_factors?.length > 0 && (
+                      <div className="space-y-1 pt-1">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">Positive Factors:</span>
+                        <ul className="space-y-1 text-gray-300 text-[11px]">
+                          {priorityData.positive_factors.map((f: string, idx: number) => (
+                            <li key={idx} className="flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Negative Factors */}
+                    {priorityData.negative_factors?.length > 0 && (
+                      <div className="space-y-1 pt-1">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold">Negative / Gap Factors:</span>
+                        <ul className="space-y-1 text-gray-400 text-[11px]">
+                          {priorityData.negative_factors.map((f: string, idx: number) => (
+                            <li key={idx} className="flex items-center gap-1.5">
+                              <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: ARJUNA ALIGNMENT */}
               {activeTab === "ALIGNMENT" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 rounded-lg bg-surface-100 border border-border-subtle">
@@ -405,7 +559,7 @@ export default function JobsPage() {
                 </div>
               )}
 
-              {/* TAB 2: KUBERA COMPENSATION */}
+              {/* TAB 3: KUBERA COMPENSATION */}
               {activeTab === "COMPENSATION" && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 rounded-lg bg-surface-100 border border-border-subtle">

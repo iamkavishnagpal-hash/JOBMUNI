@@ -108,6 +108,19 @@ class Job(Base):
     # PREMIUM, STRONG, ACCEPTABLE, LOW, UNKNOWN
     total_compensation_score: Mapped[int] = mapped_column(Integer, default=0)
     compensation_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+    # Phase 3D: CHANAKYA Opportunity Prioritization Fields
+    priority_score: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    urgency_score: Mapped[int] = mapped_column(Integer, default=50)
+    actionability: Mapped[str] = mapped_column(String(50), default="NEEDS_REVIEW", index=True)
+    # READY_TO_ACT, NEEDS_RESUME, NEEDS_EVIDENCE, NEEDS_RECRUITER_OUTREACH, NEEDS_REVIEW, BLOCKED, EXPIRED
+    effort_level: Mapped[str] = mapped_column(String(50), default="MEDIUM")
+    # LOW, MEDIUM, HIGH
+    recommended_action: Mapped[str] = mapped_column(String(50), default="REVIEW", index=True)
+    # APPLY, CONTACT_RECRUITER, PREPARE_RESUME, REVIEW, SKIP
+    lifecycle_status: Mapped[str] = mapped_column(String(50), default="EVALUATED", index=True)
+    # DISCOVERED, VERIFIED, EVALUATED, SHORTLISTED, READY_TO_ACT, APPROVAL_REQUIRED, APPROVED, EXECUTED, APPLIED, RECRUITER_CONTACTED, INTERVIEW, OFFER, HIRED, REJECTED, EXPIRED, WITHDRAWN, NO_RESPONSE, FAILED
+    chanakya_json: Mapped[dict] = mapped_column(JSON, default=dict)
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)

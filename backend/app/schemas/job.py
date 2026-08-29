@@ -135,6 +135,29 @@ class CompensationPolicyUpdate(BaseModel):
     employment_type_preference: Optional[str] = None
     preferred_locations: Optional[List[str]] = None
 
+class ChanakyaReasoning(BaseModel):
+    summary: str
+    why_ranked_here: str
+    action_rationale: str
+
+class JobPriorityResponse(BaseModel):
+    job_id: str
+    job_title: str
+    company_name: str
+    priority_score: int
+    priority_tier: str  # CRITICAL, HIGH, MEDIUM, LOW, SKIP
+    urgency_score: int
+    actionability: str  # READY_TO_ACT, NEEDS_RESUME, NEEDS_EVIDENCE, NEEDS_RECRUITER_OUTREACH, NEEDS_REVIEW, BLOCKED, EXPIRED
+    effort_level: str  # LOW, MEDIUM, HIGH
+    recommended_action: str  # APPLY, CONTACT_RECRUITER, PREPARE_RESUME, REVIEW, SKIP
+    lifecycle_status: str  # EVALUATED, SHORTLISTED, READY_TO_ACT, etc.
+    score_breakdown: Dict[str, Any]
+    positive_factors: List[str] = []
+    negative_factors: List[str] = []
+    blocking_factors: List[str] = []
+    reasoning: ChanakyaReasoning
+    decision_timestamp: str
+
 class JobResponse(JobBase):
     id: str
     company_id: Optional[str] = None
@@ -170,6 +193,15 @@ class JobResponse(JobBase):
     compensation_tier: str = "UNKNOWN"
     total_compensation_score: int = 0
     compensation_json: Optional[Dict[str, Any]] = None
+
+    # Phase 3D CHANAKYA Prioritization fields
+    priority_score: int = 0
+    urgency_score: int = 50
+    actionability: str = "NEEDS_REVIEW"
+    effort_level: str = "MEDIUM"
+    recommended_action: str = "REVIEW"
+    lifecycle_status: str = "EVALUATED"
+    chanakya_json: Optional[Dict[str, Any]] = None
 
     created_at: datetime
     updated_at: datetime

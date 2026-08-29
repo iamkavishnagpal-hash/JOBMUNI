@@ -43,7 +43,8 @@ test.describe("Phase 3C: KUBERA Compensation Intelligence E2E Verification", () 
     const jobCard = page.locator(".cursor-pointer").first();
     await jobCard.click();
 
-    // Initially ARJUNA is open
+    // Switch to ARJUNA tab
+    await page.getByRole("button", { name: /ARJUNA Skill Fit/i }).click();
     await expect(page.getByText("Required Coverage")).toBeVisible();
 
     // Switch to KUBERA

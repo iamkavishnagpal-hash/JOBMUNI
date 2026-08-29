@@ -22,7 +22,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "md" }: Mod
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150" role="dialog" aria-modal="true">
       <div
         className={cn(
           "w-full bg-surface-50 border border-border-strong rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]",
