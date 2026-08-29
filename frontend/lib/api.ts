@@ -18,7 +18,7 @@ import {
   FALLBACK_INTEGRATIONS,
 } from "./fallbackData";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""; // Use relative base in Vercel deployment
 
 async function fetchJson<T>(endpoint: string, options?: RequestInit, fallback?: T): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -186,44 +186,23 @@ export const api = {
   // Integrations Settings
   getIntegrations: () => fetchJson<IntegrationsStatus>("/settings/integrations", undefined, FALLBACK_INTEGRATIONS),
 
-  getEvidenceItems: async (params?: { category?: string; skill_or_tool?: string; search?: string }) => {
+  // Evidence Bank (SARASWATI)
+  getEvidenceItems: (params?: { category?: string; skill_or_tool?: string; search?: string }) => {
     const searchParams = new URLSearchParams();
     if (params?.category) searchParams.set("category", params.category);
     if (params?.skill_or_tool) searchParams.set("skill_or_tool", params.skill_or_tool);
     if (params?.search) searchParams.set("search", params.search);
     const qs = searchParams.toString();
-    const res = await fetchJson<any[]>(`/evidence-bank${qs ? `?${qs}` : ""}`, undefined, FALLBACK_EVIDENCE);
-    if (!res || res.length === 0) {
-      let list = [...FALLBACK_EVIDENCE];
-      if (params?.category && params.category !== "ALL") {
-        list = list.filter((i) => i.category === params.category);
-      }
-      if (params?.search) {
-        const q = params.search.toLowerCase();
-        list = list.filter(
-          (i) =>
-            i.skill_or_tool?.toLowerCase().includes(q) ||
-            i.title?.toLowerCase().includes(q) ||
-            i.evidence_text?.toLowerCase().includes(q)
-        );
-      }
-      return list;
-    }
-    return res;
+    return fetchJson<any[]>(`/evidence-bank${qs ? `?${qs}` : ""}`, undefined, FALLBACK_EVIDENCE);
   },
   getSkillsSummary: () =>
-    fetchJson<any>("/evidence-bank/skills/summary", undefined, {
-      total_skills: 12,
-      total_evidence_items: 4,
-      categories_count: 5,
-      top_skills: [
-        { skill: "Snowflake", count: 3, highest_proficiency: "EXPERT" },
-        { skill: "dbt", count: 2, highest_proficiency: "EXPERT" },
-        { skill: "Looker", count: 2, highest_proficiency: "EXPERT" },
-        { skill: "SQL", count: 4, highest_proficiency: "EXPERT" },
-        { skill: "Python", count: 2, highest_proficiency: "ADVANCED" },
-      ],
-    }),
+    fetchJson<any>("/evidence-bank/skills/summary", undefined, [
+      { skill: "Snowflake", count: 3, highest_proficiency: "EXPERT" },
+      { skill: "dbt", count: 2, highest_proficiency: "EXPERT" },
+      { skill: "Looker", count: 2, highest_proficiency: "EXPERT" },
+      { skill: "SQL", count: 4, highest_proficiency: "EXPERT" },
+      { skill: "Python", count: 2, highest_proficiency: "ADVANCED" },
+    ]),
   createEvidenceItem: (data: any) =>
     fetchJson<any>("/evidence-bank", {
       method: "POST",
