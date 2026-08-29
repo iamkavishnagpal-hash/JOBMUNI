@@ -1,152 +1,185 @@
-# JOBMUNI — Autonomous Career Intelligence & Execution OS
+# JOBMUNI
 
-[![Architecture](https://img.shields.io/badge/Architecture-Multi--Agent%20System-6366f1.svg)](#agent-ecosystem--architecture)
-[![Backend](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.14-059669.svg)](https://fastapi.tiangolo.com)
-[![Frontend](https://img.shields.io/badge/Frontend-Next.js%2014%20%7C%20TypeScript%20%7C%20TailwindCSS-0284c7.svg)](https://nextjs.org)
-[![Testing](https://img.shields.io/badge/Pytest-66%2F66%20PASS-success.svg)](backend/tests)
-[![E2E](https://img.shields.io/badge/Playwright-60%2F60%20PASS-success.svg)](frontend/tests)
-[![Data Integrity](https://img.shields.io/badge/Data%20Integrity-Zero--Hallucination-emerald.svg)](#core-engineering-principles)
-
-> **JOBMUNI** is a production-grade, autonomous Career Intelligence & Execution Operating System designed with the algorithmic rigor of a **Senior Principal Data & Platform Engineer**. It continuously discovers, verifies, evaluates, and prioritizes high-value career opportunities—grounding every decision in auditable facts, market economics, and a strict Level 2 Human-in-the-Loop safety gate.
+A personal career discovery and execution engine built on data engineering principles.
 
 ---
 
-## The Problem: The Broken Modern Career Discovery Paradigm
+## Why I Built This
 
-High-performing senior engineers and data leaders face massive friction in the modern tech employment ecosystem:
-1. **Ghost Jobs & Stale Postings**: Over 40% of public job listings are expired, already filled, or generic evergreen listings kept active for talent pipelining.
-2. **AI Hallucination & Fake Credentials**: Generative AI tools often fabricate experience, skills, and metrics, producing ungrounded resumes that get disqualified in technical screenings.
-3. **ATS Black Holes & Spray-and-Pray**: Blindly blasting 500+ generic applications yields negligible response rates compared to targeted, evidence-backed recruiter outreach.
-4. **Opaque Compensation & Currency Ambiguity**: Disclosed salary ranges are obscured across different currencies, equity components, and regional cost-of-living differences.
-5. **Decision Fatigue**: Candidates lack a deterministic ranking engine to determine: *"Which opportunity deserves attention first, and what is the next best action?"*
+I treated my job search as a data pipeline problem.
 
-**JOBMUNI solves this with enterprise data engineering architectures, deterministic taxonomies, multi-agent microservices, and mathematical opportunity scoring.**
+If you are a senior engineer or data professional looking for your next role, you quickly run into a few systemic issues with modern hiring:
+
+1. **Timing is everything**: High-quality roles receive hundreds of applicants within 48 to 72 hours. Reaching a recruiter or hiring manager early is often the difference between getting an interview and having your resume sit unread in an ATS queue.
+2. **Job boards are polluted**: A large percentage of listings are stale, already filled, duplicates, or evergreen postings kept open for talent pipelining without active headcount.
+3. **Volume without signal fails**: Spraying hundreds of generic applications rarely works. What works is matching exact verified competencies against specific role requirements with quantifiable project evidence.
+4. **Disconnected decision data**: Role requirements, candidate experience, compensation boundaries, location constraints, and posting timing live in separate places. Evaluating each role manually takes hours of repetitive work every day.
+
+I didn't want to spend 2 hours every morning manually checking Greenhouse and Lever boards, reading repetitive descriptions, checking salary bands, and maintaining spreadsheets. 
+
+I wanted a system that continuously ingests opportunities, verifies that the posting actually exists, evaluates skill and compensation alignment against verified facts, computes an objective priority score, and tells me: **"Here is the one opportunity worth acting on today, and here is what you should do next."**
 
 ---
 
-## Agent Ecosystem & Workflow Architecture
+## How It Works
 
-JOBMUNI distributes career intelligence across specialized autonomous agents governed by a centralized deterministic decision pipeline:
+The system models career execution as a deterministic state pipeline:
 
-```mermaid
-flowchart TD
-    subgraph INGESTION ["1. Information Acquisition & Discovery"]
-        A[ATS Boards / Public Feeds / Manual JDs] -->|Raw Payload| NARADA[NARADA Discovery Engine]
-    end
+$$\text{DISCOVER} \longrightarrow \text{VERIFY} \longrightarrow \text{MATCH} \longrightarrow \text{VALUE} \longrightarrow \text{PRIORITIZE} \longrightarrow \text{ACT} \longrightarrow \text{TRACK} \longrightarrow \text{LEARN}$$
 
-    subgraph VERIFICATION ["2. Freshness & Ghost Job Detection"]
-        NARADA -->|Ingested Job| YAMA[YAMA Verification Engine]
-        YAMA -->|Direct Job Endpoint Check| ATS[(ATS APIs & Live Endpoints)]
-        YAMA -->|Status: ACTIVE / GHOST / REMOVED| V_DB[(Normalized Job Store)]
-    end
-
-    subgraph EVIDENCE ["3. Ground-Truth Evidence Store"]
-        SARASWATI[SARASWATI Evidence Bank] -->|Verified STAR Records & Quant Metrics| FACT[(Candidate Ground Truth)]
-    end
-
-    subgraph INTELLIGENCE ["4. Deterministic Multi-Agent Intelligence Layer"]
-        V_DB --> ARJUNA[ARJUNA JD Alignment Engine]
-        FACT --> ARJUNA
-        ARJUNA -->|4 Coverage Gauges + Gap Analysis| INTEL_STORE
-
-        V_DB --> KUBERA[KUBERA Compensation Intelligence]
-        POLICY[Candidate Compensation Policy] --> KUBERA
-        CURR[Currency Provider Boundary] --> KUBERA
-        KUBERA -->|Salary Fit + Market Percentile| INTEL_STORE
-
-        INTEL_STORE --> CHANAKYA[CHANAKYA Prioritization Engine]
-        CHANAKYA -->|Composite Priority 0-100 + Next Action| DECISION[(Ranked Opportunities & Pipeline)]
-    end
-
-    subgraph EXECUTION ["5. Execution & Human-in-the-Loop Safety Gate"]
-        DECISION --> GPS[Career GPS: Top Daily Actions]
-        DECISION --> HANUMAN[HANUMAN Execution Agent]
-        HANUMAN -->|Level 2 Approval Request| GATE{Human Approval Center}
-        GATE -->|Approved| SEND[Dispatch Email / Tailor Resume / Apply]
-        GATE -->|Rejected / Edit| AUDIT[Audit Log & Policy Tuning]
-    end
+```
+[ATS Feeds / Job Postings]
+          │
+          ▼
+┌─────────────────────────┐
+│ 1. NARADA (Discovery)   │  Ingests raw postings, normalizes schema, extracts skills & comp
+└─────────┬───────────────┘
+          │
+          ▼
+┌─────────────────────────┐
+│ 2. YAMA (Verification)  │  Validates live HTTP status on exact job endpoint, detects ghost jobs
+└─────────┬───────────────┘
+          │ (Active postings only)
+          ▼
+┌─────────────────────────┐     ┌───────────────────────────────┐
+│ 3. ARJUNA (JD Matching) │ ◄── │ SARASWATI (Evidence Bank)     │
+└─────────┬───────────────┘     │ Verified STAR facts & metrics │
+          │                     └───────────────────────────────┘
+          ▼
+┌─────────────────────────┐     ┌───────────────────────────────┐
+│ 4. KUBERA (Comp Intel)  │ ◄── │ Candidate Opportunity Policy  │
+└─────────┬───────────────┘     │ Min/Target comp, Currency FX  │
+          │                     └───────────────────────────────┘
+          ▼
+┌─────────────────────────┐
+│ 5. CHANAKYA (Priority)  │  Composite 0-100 score + Urgency + Next Best Action
+└─────────┬───────────────┘
+          │
+          ▼
+┌─────────────────────────┐
+│ 6. Command Center UI    │  Next.js interface for review & decision making
+└─────────┬───────────────┘
+          │
+          ▼
+┌─────────────────────────┐
+│ 7. Level 2 Human Gate   │  Explicit human approval before any external action
+└─────────────────────────┘
 ```
 
 ---
 
-## Deep Dive: Agent Roster & Core Capabilities
+## Architecture & Module Responsibilities
 
-| Agent | Domain & Mission | Algorithmic Mechanism | Data Integrity Guarantee |
-| :--- | :--- | :--- | :--- |
-| **`NARADA`** | **Information Acquisition** | Autonomous ATS feed discovery (Greenhouse, Lever, Workday) and deterministic JD semantic partitioner. | Idempotent URL hashing; extracts required vs preferred skills, compensation, remote status, and hiring velocity. |
-| **`YAMA`** | **Verification & Ghost Detection** | Source-specific ATS job-level existence verification; detects redirect chains (301 $\rightarrow$ 302 $\rightarrow$ 404), expired career landing pages, and stale job decay curves. | Never classifies a job as `ACTIVE` merely because the domain or careers portal responds with HTTP 200. |
-| **`SARASWATI`** | **Candidate Evidence Bank** | Structured STAR (Situation, Task, Action, Result) fact store indexing verified competencies, quantifiable business impact, and employer provenance. | **Zero-Hallucination Policy**: AI may never manufacture or infer candidate experience. Every claim requires $\ge 10$ character ground-truth validation. |
-| **`ARJUNA`** | **Precision JD Alignment** | Deterministic skill normalization against an auditable Senior Data/BI taxonomy. Calculates 4 multi-dimensional coverage metrics. | Generates explicit `evidence_ids` links for every positive match; unmatched requirements are strictly tagged as `NO_EVIDENCE`. |
-| **`KUBERA`** | **Compensation Intelligence** | Normalizes multi-currency salary bands (`USD`, `EUR`, `GBP`, `CAD`, `AUD`, `INR`) against candidate policy. Evaluates market percentiles, remote value, and geographical fit. | If salary is undisclosed, marks tier as `UNKNOWN` and computes policy fit without hallucinating numbers. |
-| **`CHANAKYA`** | **Opportunity Prioritization** | Computes composite priority score ($0-100$) and velocity urgency ($0-100$). Determines actionability state (`READY_TO_ACT`, `NEEDS_RESUME`, `NEEDS_EVIDENCE`) and recommends the next best action (`APPLY`, `CONTACT_RECRUITER`, `REVIEW`, `SKIP`). | Hard safety gates cap expired/ghost jobs at $\le 20$ and sub-minimum salaries at $\le 42$. |
-| **`HANUMAN`** | **Autonomous Execution Engine** | Prepares tailored resumes, drafts high-converting cold recruiter outreach, and executes pipeline transitions under human oversight. | **Level 2 Human Gate**: No email is sent and no application is submitted without explicit user approval. |
+The module names represent functional responsibilities within the pipeline:
 
----
+### 1. Ingestion & Verification
+* **`NARADA` (Information Discovery)**: Polls configured company ATS feeds (Greenhouse, Lever) and accepts manual JD text. Normalizes raw HTML into structured schemas: required skills, preferred skills, location, remote status, and compensation ranges.
+* **`YAMA` (Verification & Freshness)**: Validates that the exact posting is still live. It inspects HTTP status codes and redirect chains (catching cases where a 301/302 redirects to a generic careers landing page or returns 404). It applies a freshness decay score to flag likely inactive roles.
 
-## Mathematical Scoring & Prioritization Models
+### 2. Evidence Grounding & Matching
+* **`SARASWATI` (Candidate Evidence Bank)**: A structured fact store containing real project accomplishments, STAR breakdowns (Situation, Task, Action, Result), quantifiable metrics (e.g. *"$140k/yr compute cost reduction"*, *"58% reduction in ETL runtime"*), and employer provenance.
+  * **Zero Hallucination Rule**: The matching engine cannot invent, assume, or infer skills. If a skill does not exist in the Evidence Bank, it is categorized as `NO_EVIDENCE`.
+* **`ARJUNA` (Precision Alignment Engine)**: Matches parsed JD requirements against the candidate's Evidence Bank using an auditable taxonomy with alias normalization. Outputs 4 concrete metrics:
+  * `Required Coverage %`: Percentage of required JD skills backed by candidate evidence.
+  * `Preferred Coverage %`: Percentage of nice-to-have skills matched.
+  * `Evidence Density %`: Ratio of matched skills supported by quantifiable metrics.
+  * `Seniority Fit %`: Title and experience level delta.
 
-### 1. ARJUNA Multi-Dimensional Coverage Model
+### 3. Financial & Strategic Evaluation
+* **`KUBERA` (Compensation Intelligence)**: Evaluates financial attractiveness against the candidate's configured policy (`target_comp_min`, `target_comp_preferred`, `target_comp_max`).
+  * **Currency Normalization Boundary**: Converts foreign currencies (USD, EUR, GBP, CAD, AUD, INR) to policy base currency via explicit exchange rates with transparent audit flags (`EXACT`, `CONVERTED`, `UNKNOWN_RATE`).
+  * **Undisclosed Salary Handling**: If compensation is missing from the posting, it is explicitly marked `UNKNOWN` rather than guessed.
+* **`CHANAKYA` (Opportunity Prioritization)**: Computes a composite priority score ($0-100$) by combining skill match, compensation fit, evidence density, hiring signal, freshness, and remote alignment.
+  * Computes a separate **Urgency** score based on posting age (velocity).
+  * Assigns **Actionability** (`READY_TO_ACT`, `NEEDS_RESUME`, `NEEDS_EVIDENCE`, `NEEDS_RECRUITER_OUTREACH`, `BLOCKED`, `EXPIRED`).
+  * Suggests **Next Best Action** (`APPLY`, `CONTACT_RECRUITER`, `PREPARE_RESUME`, `REVIEW`, `SKIP`).
 
-$$\text{Required Coverage} = \frac{|\text{Matched Required Skills}|}{|\text{Total Required Skills}|} \times 100\%$$
-
-$$\text{Evidence Density} = \frac{|\text{Matched Skills with Quantifiable Metrics}|}{|\text{Total Matched Skills}|} \times 100\%$$
-
-$$\text{Experience Fit} = f(\Delta \text{Seniority Level}, \text{Years Experience})$$
-
-### 2. CHANAKYA Composite Opportunity Score
-
-$$\text{Priority Score} = \min\left(100, \; \sum_{i} w_i \cdot S_i\right)$$
-
-Where configurable weights $w_i$ govern:
-- **Skill Alignment ($35\%$)**: Weighted combination of required coverage, preferred coverage, and seniority fit.
-- **Compensation Attractiveness ($25\%$)**: Policy salary fit score and senior market percentile.
-- **Evidence Density ($15\%$)**: Verification depth of candidate project metrics in SARASWATI.
-- **Hiring Signal ($10\%$)**: Company funding, team expansion velocity, and role urgency.
-- **Posting Freshness ($10\%$)**: Time decay curve ($0-72\text{h} = 100$, $>30\text{d} = 25$).
-- **Remote & Location Fit ($5\%$)**: Geographical alignment and remote-work policy.
+### 4. Control & Safety
+* **Level 2 Human Approval Gate**: All external-facing actions (sending an outreach email, submitting an application) require explicit review and manual approval in the web interface. The system never executes external side effects autonomously.
 
 ---
 
-## User Interface & Command Surface
+## Implementation Status
 
-JOBMUNI features an ultra-responsive, executive dark-mode interface built with Next.js 14, TailwindCSS, and custom design tokens:
-
-- **`/dashboard` — Executive Command Center**: Live funnel conversion telemetry, priority bottleneck diagnostics, and Career GPS daily top action.
-- **`/jobs` — Opportunity Radar & Prioritization**: Ranked opportunity feed with multi-agent intelligence drawers (CHANAKYA Priority & Action, ARJUNA Skill Coverage, KUBERA Compensation).
-- **`/evidence-bank` — SARASWATI Evidence Bank**: Interactive repository of verified candidate competencies, STAR narratives, and metric badges.
-- **`/recruiters` — Recruiter CRM**: Talent sourcer tracking with tech stack alignment, outreach history, and relationship stages.
-- **`/approvals` — Level 2 Human Approval Gate**: Review, edit, approve, or reject autonomous action proposals with full transparency.
-- **`/settings` — Opportunity Policy & Scoring Config**: Real-time tuning of scoring weights, minimum compensation thresholds, and currency preferences.
-
----
-
-## Technical Stack & Engineering Rigor
-
-| Layer | Technology | Engineering Design Highlights |
+| Component | Status | Implementation Details |
 | :--- | :--- | :--- |
-| **Backend API** | FastAPI, Python 3.14, Pydantic v2 | Async ASGI architecture with sub-millisecond response times, dependency injection, and strict type safety. |
-| **ORM & Database** | SQLAlchemy 2.0 (Async), Alembic, SQLite WAL / PostgreSQL | Multi-dialect migration support (`batch_alter_table`), connection pooling, and normalized entity relationships. |
-| **Frontend App** | Next.js 14 (App Router), TypeScript, Vanilla/Tailwind CSS | Zero client-side hydration errors, zero horizontal layout shift across 320px to 1920px viewports. |
-| **Testing Suite** | Pytest, AnyIO, Playwright E2E | 100% test pass rate: **66 Pytest tests** and **60 Playwright cross-browser/mobile tests**. |
+| **Independent Background Worker** | **Implemented** | `worker/main.py` runs scheduled polling, ingestion, verification, and scoring independently of the web frontend or IDE. |
+| **ATS Feed Connectors** | **Implemented** | Automated ingestion for Greenhouse and Lever API/board feeds, plus manual JD parser. |
+| **ATS Job-Level Verifier (`YAMA`)** | **Implemented** | Inspects redirect chains, detects expired markers, and updates verification status in DB. |
+| **Candidate Evidence Bank (`SARASWATI`)** | **Implemented** | Full CRUD, STAR breakdown, metrics storage, and profile policy management. |
+| **Skill Taxonomy & Alignment (`ARJUNA`)** | **Implemented** | Canonical dictionary for Senior BI / Data competencies, 4-gauge coverage calculations, and evidence IDs linking. |
+| **Compensation Engine (`KUBERA`)** | **Implemented** | Currency boundary, policy comparison, market percentile evaluation, and gap reporting. |
+| **Opportunity Prioritization (`CHANAKYA`)** | **Implemented** | Multi-factor weighted composite scoring, velocity urgency, effort estimation, and next-action recommendation. |
+| **Web Command Center** | **Implemented** | Next.js 14 interface with Job Radar, multi-agent intelligence modals, priority filtering, and responsive design. |
+| **Execution Agent (`HANUMAN`)** | **Planned** | Tailored resume bullet generation and outreach drafting for the Level 2 approval queue. |
+| **Google Sheets Sync Adapter** | **Planned** | Auxiliary operational control surface syncing bidirectional status with the PostgreSQL source of truth. |
 
 ---
 
-## Quickstart & Local Setup
+## Engineering Design & Technical Decisions
+
+1. **PostgreSQL as Source of Truth**: The relational database stores all normalized entities (`jobs`, `companies`, `candidate_profiles`, `evidence_items`, `scoring_configs`, `approvals`). SQLite with WAL mode is used for fast local development.
+2. **Deterministic Logic Over Prompt Engineering**: Matching, scoring, currency conversions, and verification use deterministic algorithms rather than unpredictable LLM prompts. AI classification is restricted to structured extraction where evidence is strictly grounded.
+3. **Decoupled Worker Architecture**: Discovery and verification tasks run in a standalone background process (`worker/main.py`) with structured logging, run IDs, and retry policies. The frontend is purely a control surface.
+4. **Test-Driven Rigor**:
+   - **Backend**: **66 unit and integration tests** in pytest covering edge cases (salary below min, foreign currencies, redirect chains, stale posting decay, skill gap detection, empty evidence banks).
+   - **Frontend**: **60 Playwright end-to-end tests** covering route navigation, modal interactions, tab switching, and responsive viewport validation across mobile (320px, 375px, 390px) and desktop screens.
+
+---
+
+## Repository Structure
+
+```
+JOBMUNI/
+├── backend/
+│   ├── alembic/              # Database schema migrations (001 through 007)
+│   ├── app/
+│   │   ├── api/v1/           # REST endpoints (jobs, evidence, approvals, settings)
+│   │   ├── core/             # Database connection, config, logging
+│   │   ├── models/           # SQLAlchemy ORM models
+│   │   ├── schemas/          # Pydantic v2 validation models
+│   │   └── services/         # Core business logic:
+│   │       ├── alignment_engine.py      # ARJUNA skill matching
+│   │       ├── compensation_service.py  # KUBERA compensation intel
+│   │       ├── chanakya_engine.py       # CHANAKYA prioritization
+│   │       ├── currency_provider.py     # FX normalization boundary
+│   │       ├── discovery_service.py     # NARADA ATS ingestion
+│   │       ├── evidence_service.py      # SARASWATI evidence bank
+│   │       ├── jd_parser.py             # Deterministic text parser
+│   │       ├── skill_taxonomy.py        # Canonical skill mapping
+│   │       └── verification_service.py  # YAMA ATS verification
+│   └── tests/                # 66 backend pytest tests
+├── frontend/
+│   ├── app/                  # Next.js 14 App Router pages
+│   │   ├── dashboard/        # Executive overview & Career GPS
+│   │   ├── jobs/             # Job Radar & multi-agent intelligence drawer
+│   │   ├── evidence-bank/    # SARASWATI competency management
+│   │   ├── recruiters/       # Recruiter CRM
+│   │   ├── approvals/        # Level 2 Human-in-the-loop review
+│   │   └── settings/         # Scoring weights & opportunity policy
+│   ├── components/ui/        # Reusable UI components (Modals, Badges, Cards)
+│   └── tests/                # 60 Playwright E2E tests & visual capture scripts
+└── worker/
+    └── main.py               # Standalone 24/7 background worker
+```
+
+---
+
+## Local Development & Setup
 
 ### 1. Prerequisites
-- Python 3.11+ (Python 3.14 recommended)
-- Node.js 18+ & npm
+- Python 3.11+
+- Node.js 18+
 - Git
 
-### 2. Backend Installation
+### 2. Backend Setup
 
 ```bash
-# Navigate to backend directory
 cd backend
 
-# Create and activate virtual environment
+# Create virtual environment
 python -m venv ../venv
-source ../venv/bin/activate  # On Windows: ..\venv\Scripts\activate
+source ../venv/bin/activate   # Windows: ..\venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
@@ -154,44 +187,48 @@ pip install -r requirements.txt
 # Run database migrations
 alembic upgrade head
 
-# Run backend unit & integration tests
+# Run unit & integration test suite
 pytest -v
 
-# Start FastAPI development server (Port 8000)
+# Start FastAPI server (Port 8000)
 uvicorn app.main:app --reload --port 8000
 ```
 
-### 3. Frontend Installation
+### 3. Frontend Setup
 
 ```bash
-# Navigate to frontend directory
 cd frontend
 
 # Install dependencies
 npm install
 
-# Run full Playwright E2E test suite
+# Run Playwright E2E test suite
 npx playwright test
 
 # Build production bundle
 npm run build
 
-# Start Next.js server (Port 3000)
+# Start frontend application (Port 3000)
 npm run start
 ```
 
-Open `http://localhost:3000` to access the JOBMUNI Command Center.
+### 4. Background Worker Setup
+
+```bash
+cd worker
+python main.py
+```
 
 ---
 
-## Security & Safety Guardrails
+## Data & Safety Principles
 
-1. **No Unapproved External Side Effects**: JOBMUNI never sends emails, contacts recruiters, or applies to jobs automatically without explicit Level 2 approval.
-2. **Zero Financial or Negotiation Actions**: The system never engages in automatic compensation negotiations.
-3. **Auditability & Provenance**: Every calculated score and recommendation retains complete lineage (Evidence IDs, ATS HTTP response codes, and evaluation timestamps).
+* **No Automated Spam**: The engine never blindly applies or spams recruiters. It identifies high-signal matches and prepares context for human decision-making.
+* **Ground-Truth Accountability**: Every score, recommendation, and skill verdict cites the exact Evidence IDs and data points used in the calculation.
+* **Fail-Safe Defaults**: Missing data is marked as `UNKNOWN` rather than estimated. Stale or ambiguous postings are downgraded automatically.
 
 ---
 
-## License
+## Author
 
-MIT License — engineered for senior career autonomy and data integrity.
+Built by **Kavish Nagpal** — Senior BI & Analytics Engineer.
