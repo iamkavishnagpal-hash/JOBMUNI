@@ -39,6 +39,40 @@ class JobManualParseRequest(BaseModel):
     source_url: Optional[str] = None
     location: Optional[str] = "Remote, US"
 
+class SkillMatchItem(BaseModel):
+    requirement: str
+    normalized_skill: str
+    matched: bool
+    evidence_ids: List[str] = []
+    evidence_count: int = 0
+    confidence: float = 1.0
+    top_metric: Optional[str] = None
+    source_companies: List[str] = []
+    verification_state: str = "NO_EVIDENCE"
+
+class AlignmentReasoning(BaseModel):
+    summary: str
+    positive_factors: List[str] = []
+    negative_factors: List[str] = []
+    unknowns: List[str] = []
+    recommended_action: str
+
+class JobAlignmentResponse(BaseModel):
+    job_id: str
+    job_title: str
+    company_name: str
+    match_verdict: str  # STRONG_MATCH, PARTIAL_MATCH, WEAK_MATCH, INSUFFICIENT_EVIDENCE
+    required_coverage_pct: float
+    preferred_coverage_pct: float
+    evidence_coverage_pct: float
+    experience_alignment_pct: float
+    matched_required: List[SkillMatchItem] = []
+    missing_required: List[SkillMatchItem] = []
+    matched_preferred: List[SkillMatchItem] = []
+    missing_preferred: List[SkillMatchItem] = []
+    unknown_requirements: List[str] = []
+    reasoning: AlignmentReasoning
+
 class JobResponse(JobBase):
     id: str
     company_id: Optional[str] = None
@@ -61,6 +95,15 @@ class JobResponse(JobBase):
     final_score: int = 0
     priority_tier: str = "NURTURE"
     score_breakdown: Dict[str, Any] = {}
+    
+    # Phase 3B Alignment fields
+    match_verdict: str = "INSUFFICIENT_EVIDENCE"
+    required_coverage_pct: float = 0.0
+    preferred_coverage_pct: float = 0.0
+    evidence_coverage_pct: float = 0.0
+    experience_alignment_pct: float = 0.0
+    alignment_json: Optional[Dict[str, Any]] = None
+
     created_at: datetime
     updated_at: datetime
     skills: List[JobSkillResponse] = []
@@ -73,4 +116,3 @@ class JobPaginationResponse(BaseModel):
     page: int
     limit: int
     pages: int
-

@@ -54,6 +54,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  getJobAlignment: (jobId: string) => fetchJson<any>(`/jobs/${jobId}/alignment`),
+  evaluateJobAlignment: (jobId: string) =>
+    fetchJson<any>(`/jobs/${jobId}/alignment`, {
+      method: "POST",
+    }),
 
   // Recruiters
   getRecruiters: () => fetchJson<Recruiter[]>("/recruiters"),

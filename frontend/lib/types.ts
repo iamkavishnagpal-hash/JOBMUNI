@@ -54,6 +54,12 @@ export interface Job {
   final_score: number;
   priority_tier: "ACT_NOW" | "HIGH" | "MEDIUM" | "NURTURE" | "IGNORE";
   score_breakdown: Record<string, any>;
+  match_verdict?: "STRONG_MATCH" | "PARTIAL_MATCH" | "WEAK_MATCH" | "INSUFFICIENT_EVIDENCE" | string;
+  required_coverage_pct?: number;
+  preferred_coverage_pct?: number;
+  evidence_coverage_pct?: number;
+  experience_alignment_pct?: number;
+  alignment_json?: any;
   created_at: string;
   skills: JobSkill[];
 }

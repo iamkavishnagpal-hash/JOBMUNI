@@ -93,6 +93,15 @@ class Job(Base):
     final_score: Mapped[int] = mapped_column(Integer, default=0, index=True)
     priority_tier: Mapped[str] = mapped_column(String(50), default="NURTURE", index=True)
     score_breakdown: Mapped[dict] = mapped_column(JSON, default=dict)
+
+    # Phase 3B: ARJUNA JD Alignment Fields
+    match_verdict: Mapped[str] = mapped_column(String(50), default="INSUFFICIENT_EVIDENCE", index=True)
+    # STRONG_MATCH, PARTIAL_MATCH, WEAK_MATCH, INSUFFICIENT_EVIDENCE
+    required_coverage_pct: Mapped[float] = mapped_column(Float, default=0.0)
+    preferred_coverage_pct: Mapped[float] = mapped_column(Float, default=0.0)
+    evidence_coverage_pct: Mapped[float] = mapped_column(Float, default=0.0)
+    experience_alignment_pct: Mapped[float] = mapped_column(Float, default=0.0)
+    alignment_json: Mapped[dict] = mapped_column(JSON, default=dict)
     
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)

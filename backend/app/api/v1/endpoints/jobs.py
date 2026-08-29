@@ -5,7 +5,7 @@ from sqlalchemy import select, desc, func, or_
 from app.core.database import get_db
 from app.models.job import Job, JobSkill, Company
 from app.models.scoring_config import ScoringConfig
-from app.schemas.job import JobResponse, JobCreate, JobManualParseRequest, JobPaginationResponse
+from app.schemas.job import JobResponse, JobCreate, JobManualParseRequest, JobPaginationResponse, JobAlignmentResponse
 from app.services.jd_parser import JDParser
 from app.services.scoring_service import OpportunityScorer
 from app.services.verification_service import YamaVerificationService
@@ -153,3 +153,29 @@ async def ingest_feed_endpoint(
         return res
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+@router.get("/{job_id}/alignment", response_model=JobAlignmentResponse)
+async def get_job_alignment_endpoint(job_id: str, db: AsyncSession = Depends(get_db)):
+    from app.services.alignment_engine import arjuna_engine
+    result = await db.execute(select(Job).where(Job.id == job_id))
+    job = result.scalars().first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    # If alignment is already cached in alignment_json and valid, return it; otherwise evaluate and persist
+    if job.alignment_json and job.alignment_json.get("matched_required") is not None:
+        return job.alignment_json
+
+    alignment = await arjuna_engine.evaluate_and_persist_job_alignment(db, job_id)
+    if not alignment:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return alignment
+
+@router.post("/{job_id}/alignment", response_model=JobAlignmentResponse)
+async def evaluate_job_alignment_endpoint(job_id: str, db: AsyncSession = Depends(get_db)):
+    from app.services.alignment_engine import arjuna_engine
+    alignment = await arjuna_engine.evaluate_and_persist_job_alignment(db, job_id)
+    if not alignment:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return alignment
+
