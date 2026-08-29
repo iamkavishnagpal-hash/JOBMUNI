@@ -17,12 +17,14 @@ import {
   Flame,
   ShieldCheck,
   Target,
-  AlertCircle,
+  DollarSign,
+  TrendingUp,
+  Award,
   CheckCircle2,
   XCircle,
   RefreshCw,
-  TrendingUp,
-  Award,
+  HelpCircle,
+  Layers,
 } from "lucide-react";
 
 export default function JobsPage() {
@@ -31,10 +33,12 @@ export default function JobsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Selected job for Alignment Modal
+  // Selected job for Intelligence Modal
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [activeTab, setActiveTab] = useState<"ALIGNMENT" | "COMPENSATION">("ALIGNMENT");
   const [alignmentData, setAlignmentData] = useState<any | null>(null);
-  const [alignmentLoading, setAlignmentLoading] = useState(false);
+  const [compensationData, setCompensationData] = useState<any | null>(null);
+  const [intelLoading, setIntelLoading] = useState(false);
 
   // Form state
   const [companyName, setCompanyName] = useState("");
@@ -58,30 +62,39 @@ export default function JobsPage() {
     loadJobs();
   }, []);
 
-  const openAlignmentDrawer = async (job: Job) => {
+  const openIntelModal = async (job: Job) => {
     setSelectedJob(job);
+    setActiveTab("ALIGNMENT");
     try {
-      setAlignmentLoading(true);
-      const data = await api.getJobAlignment(job.id);
-      setAlignmentData(data);
+      setIntelLoading(true);
+      const [align, comp] = await Promise.all([
+        api.getJobAlignment(job.id),
+        api.getJobCompensation(job.id),
+      ]);
+      setAlignmentData(align);
+      setCompensationData(comp);
     } catch (err) {
-      console.error("Failed to fetch alignment:", err);
+      console.error("Failed to fetch intelligence:", err);
     } finally {
-      setAlignmentLoading(false);
+      setIntelLoading(false);
     }
   };
 
-  const handleReevaluateAlignment = async () => {
+  const handleReevaluateIntel = async () => {
     if (!selectedJob) return;
     try {
-      setAlignmentLoading(true);
-      const data = await api.evaluateJobAlignment(selectedJob.id);
-      setAlignmentData(data);
+      setIntelLoading(true);
+      const [align, comp] = await Promise.all([
+        api.evaluateJobAlignment(selectedJob.id),
+        api.evaluateJobCompensation(selectedJob.id),
+      ]);
+      setAlignmentData(align);
+      setCompensationData(comp);
       await loadJobs();
     } catch (err) {
-      console.error("Failed to reevaluate alignment:", err);
+      console.error("Failed to reevaluate intelligence:", err);
     } finally {
-      setAlignmentLoading(false);
+      setIntelLoading(false);
     }
   };
 
@@ -135,11 +148,26 @@ export default function JobsPage() {
     }
   };
 
+  const getCompTierBadge = (tier: string) => {
+    switch (tier) {
+      case "PREMIUM":
+        return <Badge variant="success" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold">PREMIUM COMP</Badge>;
+      case "STRONG":
+        return <Badge variant="indigo" className="font-bold">STRONG COMP</Badge>;
+      case "ACCEPTABLE":
+        return <Badge variant="outline" className="text-gray-300">ACCEPTABLE COMP</Badge>;
+      case "LOW":
+        return <Badge variant="danger">BELOW TARGET</Badge>;
+      default:
+        return <Badge variant="outline" className="text-gray-500">SALARY UNDISCLOSED</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Header
-        title="Job Radar & Opportunity Engine"
-        subtitle="Live Senior BI & Analytics opportunities aligned deterministically against SARASWATI Evidence Bank"
+        title="Job Radar & Career Intelligence"
+        subtitle="Live Senior BI & Analytics opportunities evaluated by ARJUNA (Skill Match) and KUBERA (Compensation Intelligence)"
         actionButton={{
           label: "Ingest Opportunity (Paste JD)",
           onClick: () => setIsModalOpen(true),
@@ -148,7 +176,7 @@ export default function JobsPage() {
       />
 
       {loading ? (
-        <div className="p-12 text-center text-gray-400 font-mono">Loading opportunities from database...</div>
+        <div className="p-12 text-center text-gray-400 font-mono text-xs">Loading opportunities from database...</div>
       ) : jobs.length === 0 ? (
         <EmptyState
           icon={Radar}
@@ -163,7 +191,7 @@ export default function JobsPage() {
             <Card
               key={job.id}
               hoverEffect
-              onClick={() => openAlignmentDrawer(job)}
+              onClick={() => openIntelModal(job)}
               className="flex flex-col justify-between cursor-pointer transition-all hover:border-accent-indigo/60"
             >
               <div>
@@ -193,6 +221,9 @@ export default function JobsPage() {
                   {job.match_verdict && (
                     <span>{getVerdictBadge(job.match_verdict)}</span>
                   )}
+                  {job.compensation_tier && job.compensation_tier !== "UNKNOWN" && (
+                    <span>{getCompTierBadge(job.compensation_tier)}</span>
+                  )}
                 </div>
 
                 {job.skills && job.skills.length > 0 && (
@@ -214,7 +245,7 @@ export default function JobsPage() {
               <div className="pt-3 border-t border-border-subtle flex items-center justify-between text-xs text-gray-500 font-mono">
                 <span>First seen: {formatDate(job.first_seen_at)}</span>
                 <span className="text-accent-indigo hover:underline flex items-center gap-1">
-                  <Target className="w-3 h-3" /> View ARJUNA Fit
+                  <Target className="w-3 h-3" /> View Intelligence
                 </span>
               </div>
             </Card>
@@ -222,124 +253,224 @@ export default function JobsPage() {
         </div>
       )}
 
-      {/* ARJUNA JD Alignment Details Modal */}
+      {/* Intelligence Modal (ARJUNA & KUBERA) */}
       {selectedJob && (
         <Modal
           isOpen={!!selectedJob}
           onClose={() => {
             setSelectedJob(null);
             setAlignmentData(null);
+            setCompensationData(null);
           }}
-          title={`ARJUNA Precision Alignment — ${selectedJob.company_name}`}
+          title={`${selectedJob.title} — ${selectedJob.company_name}`}
           maxWidth="xl"
         >
-          {alignmentLoading || !alignmentData ? (
+          {intelLoading || !alignmentData || !compensationData ? (
             <div className="p-8 text-center text-gray-400 font-mono text-xs">
-              Calculating evidence-grounded alignment against SARASWATI...
+              Calculating evidence-grounded intelligence...
             </div>
           ) : (
             <div className="space-y-5 text-xs">
-              {/* Header Summary */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-lg bg-surface-100 border border-border-subtle">
-                <div>
-                  <div className="text-sm font-bold text-white">{alignmentData.job_title}</div>
-                  <div className="text-gray-400 font-mono text-[11px]">{alignmentData.company_name}</div>
-                </div>
+              {/* Top Navigation Switcher */}
+              <div className="flex items-center justify-between border-b border-border-subtle pb-3">
                 <div className="flex items-center gap-2">
-                  {getVerdictBadge(alignmentData.match_verdict)}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleReevaluateAlignment}
-                    disabled={alignmentLoading}
-                    className="flex items-center gap-1"
+                  <button
+                    onClick={() => setActiveTab("ALIGNMENT")}
+                    className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all ${
+                      activeTab === "ALIGNMENT"
+                        ? "bg-accent-indigo text-white shadow-sm font-semibold"
+                        : "bg-surface-100 text-gray-400 hover:text-white"
+                    }`}
                   >
-                    <RefreshCw className={`w-3 h-3 ${alignmentLoading ? "animate-spin" : ""}`} />
-                    <span>Re-evaluate</span>
-                  </Button>
+                    <Target className="w-3.5 h-3.5" />
+                    <span>ARJUNA Skill Fit</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("COMPENSATION")}
+                    className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all ${
+                      activeTab === "COMPENSATION"
+                        ? "bg-accent-indigo text-white shadow-sm font-semibold"
+                        : "bg-surface-100 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <DollarSign className="w-3.5 h-3.5" />
+                    <span>KUBERA Compensation</span>
+                  </button>
                 </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReevaluateIntel}
+                  disabled={intelLoading}
+                  className="flex items-center gap-1 text-[11px]"
+                >
+                  <RefreshCw className={`w-3 h-3 ${intelLoading ? "animate-spin" : ""}`} />
+                  <span>Re-evaluate</span>
+                </Button>
               </div>
 
-              {/* 4 Multi-Dimension Coverage Gauges */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
-                  <div className="text-lg font-bold font-mono text-emerald-400">{alignmentData.required_coverage_pct}%</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">Required Coverage</div>
-                </div>
-                <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
-                  <div className="text-lg font-bold font-mono text-accent-indigo">{alignmentData.preferred_coverage_pct}%</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">Preferred Coverage</div>
-                </div>
-                <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
-                  <div className="text-lg font-bold font-mono text-amber-400">{alignmentData.evidence_coverage_pct}%</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">Evidence Density</div>
-                </div>
-                <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
-                  <div className="text-lg font-bold font-mono text-cyan-400">{alignmentData.experience_alignment_pct}%</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">Seniority Fit</div>
-                </div>
-              </div>
-
-              {/* Explainable Reasoning Block */}
-              {alignmentData.reasoning && (
-                <div className="p-3.5 rounded-lg bg-surface-100 border border-border-subtle space-y-2">
-                  <div className="font-semibold text-white text-xs flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-accent-indigo" />
-                    Explainable Rationale & Recommended Action
+              {/* TAB 1: ARJUNA ALIGNMENT */}
+              {activeTab === "ALIGNMENT" && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-100 border border-border-subtle">
+                    <div>
+                      <div className="font-bold text-white text-xs">Skill & Evidence Alignment</div>
+                      <div className="text-gray-400 text-[11px]">{selectedJob.company_name}</div>
+                    </div>
+                    <div>{getVerdictBadge(alignmentData.match_verdict)}</div>
                   </div>
-                  <p className="text-gray-300 leading-relaxed">{alignmentData.reasoning.summary}</p>
-                  {alignmentData.reasoning.recommended_action && (
-                    <div className="p-2 rounded bg-surface-200 text-[11px] text-emerald-300 font-mono">
-                      Action: {alignmentData.reasoning.recommended_action}
+
+                  {/* 4 Coverage Gauges */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-lg font-bold font-mono text-emerald-400">{alignmentData.required_coverage_pct}%</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Required Coverage</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-lg font-bold font-mono text-accent-indigo">{alignmentData.preferred_coverage_pct}%</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Preferred Coverage</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-lg font-bold font-mono text-amber-400">{alignmentData.evidence_coverage_pct}%</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Evidence Density</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-lg font-bold font-mono text-cyan-400">{alignmentData.experience_alignment_pct}%</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Seniority Fit</div>
+                    </div>
+                  </div>
+
+                  {/* Explainable Rationale */}
+                  {alignmentData.reasoning && (
+                    <div className="p-3.5 rounded-lg bg-surface-100 border border-border-subtle space-y-2">
+                      <div className="font-semibold text-white text-xs flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-accent-indigo" />
+                        Explainable Rationale & Action
+                      </div>
+                      <p className="text-gray-300 leading-relaxed">{alignmentData.reasoning.summary}</p>
+                      {alignmentData.reasoning.recommended_action && (
+                        <div className="p-2 rounded bg-surface-200 text-[11px] text-emerald-300 font-mono">
+                          Action: {alignmentData.reasoning.recommended_action}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Matched Required Skills */}
+                  <div className="space-y-2">
+                    <div className="font-semibold text-gray-300 flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      Matched Required Skills ({alignmentData.matched_required?.length || 0})
+                    </div>
+                    <div className="space-y-2">
+                      {alignmentData.matched_required?.map((m: any, idx: number) => (
+                        <div key={idx} className="p-2.5 rounded bg-surface-100 border border-border-subtle space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-white text-xs font-mono">{m.normalized_skill}</span>
+                            <Badge variant="success" className="text-[10px]">
+                              {m.evidence_count} Verified Record(s)
+                            </Badge>
+                          </div>
+                          {m.top_metric && (
+                            <div className="text-emerald-400 font-mono text-[11px] flex items-center gap-1">
+                              <TrendingUp className="w-3 h-3" />
+                              <span>{m.top_metric}</span>
+                            </div>
+                          )}
+                          <div className="text-[10px] text-gray-500 font-mono">
+                            Evidence IDs: {m.evidence_ids?.slice(0, 2).join(", ")}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Missing Skills */}
+                  {alignmentData.missing_required?.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="font-semibold text-gray-300 flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                        <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                        Missing Required Skills ({alignmentData.missing_required.length})
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {alignmentData.missing_required.map((miss: any, idx: number) => (
+                          <Badge key={idx} variant="danger">
+                            {miss.normalized_skill || miss.requirement} (No Evidence)
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Matched Required Skills */}
-              <div className="space-y-2">
-                <div className="font-semibold text-gray-300 flex items-center gap-1 text-[11px] uppercase tracking-wider">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  Matched Required Skills ({alignmentData.matched_required?.length || 0})
-                </div>
-                <div className="space-y-2">
-                  {alignmentData.matched_required?.map((m: any, idx: number) => (
-                    <div key={idx} className="p-2.5 rounded bg-surface-100 border border-border-subtle space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-white text-xs font-mono">{m.normalized_skill}</span>
-                        <Badge variant="success" className="text-[10px]">
-                          {m.evidence_count} Verified Record(s)
-                        </Badge>
-                      </div>
-                      {m.top_metric && (
-                        <div className="text-emerald-400 font-mono text-[11px] flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" />
-                          <span>{m.top_metric}</span>
-                        </div>
-                      )}
-                      <div className="text-[10px] text-gray-500 font-mono">
-                        Evidence IDs: {m.evidence_ids?.slice(0, 2).join(", ")}
-                        {m.source_companies?.length > 0 && ` • Provenance: ${m.source_companies.join(", ")}`}
+              {/* TAB 2: KUBERA COMPENSATION */}
+              {activeTab === "COMPENSATION" && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-surface-100 border border-border-subtle">
+                    <div>
+                      <div className="font-bold text-white text-xs">Financial Compensation Evaluation</div>
+                      <div className="text-gray-400 text-[11px]">
+                        Disclosed: <span className="font-mono text-emerald-400">{compensationData.disclosed_salary?.formatted}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <div>{getCompTierBadge(compensationData.compensation_tier)}</div>
+                  </div>
 
-              {/* Missing Skills / Gaps */}
-              {alignmentData.missing_required?.length > 0 && (
-                <div className="space-y-2">
-                  <div className="font-semibold text-gray-300 flex items-center gap-1 text-[11px] uppercase tracking-wider">
-                    <XCircle className="w-3.5 h-3.5 text-rose-400" />
-                    Missing Required Skills ({alignmentData.missing_required.length})
+                  {/* 4 Financial / Policy Gauges */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-lg font-bold font-mono text-emerald-400">{compensationData.salary_fit_score}%</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Salary Fit</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-lg font-bold font-mono text-accent-indigo">{compensationData.market_position_score}%</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Market Position</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-lg font-bold font-mono text-cyan-400">{compensationData.remote_value_score}%</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Remote Alignment</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle text-center">
+                      <div className="text-lg font-bold font-mono text-amber-400">{compensationData.location_value_score}%</div>
+                      <div className="text-[10px] text-gray-400 mt-0.5">Location Value</div>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {alignmentData.missing_required.map((miss: any, idx: number) => (
-                      <Badge key={idx} variant="danger">
-                        {miss.normalized_skill || miss.requirement} (No Evidence)
-                      </Badge>
-                    ))}
-                  </div>
+
+                  {/* Policy Comparison & Rationale */}
+                  {compensationData.reasoning && (
+                    <div className="p-3.5 rounded-lg bg-surface-100 border border-border-subtle space-y-2">
+                      <div className="font-semibold text-white text-xs flex items-center gap-1.5">
+                        <DollarSign className="w-4 h-4 text-emerald-400" />
+                        Compensation Analysis & Policy Comparison
+                      </div>
+                      <p className="text-gray-300 leading-relaxed">{compensationData.reasoning.summary}</p>
+                      <div className="p-2 rounded bg-surface-200 text-[11px] text-gray-300 font-mono">
+                        Policy Target: {compensationData.reasoning.policy_comparison}
+                      </div>
+                      {compensationData.reasoning.recommended_action && (
+                        <div className="p-2 rounded bg-surface-200 text-[11px] text-emerald-300 font-mono">
+                          Action: {compensationData.reasoning.recommended_action}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Unknown Factors */}
+                  {compensationData.reasoning?.unknown_factors?.length > 0 && (
+                    <div className="p-3 rounded-lg bg-surface-100 border border-border-subtle space-y-1.5">
+                      <div className="font-semibold text-gray-400 flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                        <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                        Unknown Financial Factors ({compensationData.reasoning.unknown_factors.length})
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 text-gray-400 text-[11px]">
+                        {compensationData.reasoning.unknown_factors.map((unk: string, idx: number) => (
+                          <li key={idx}>{unk}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

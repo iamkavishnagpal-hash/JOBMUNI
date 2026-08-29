@@ -60,6 +60,9 @@ export interface Job {
   evidence_coverage_pct?: number;
   experience_alignment_pct?: number;
   alignment_json?: any;
+  compensation_tier?: "PREMIUM" | "STRONG" | "ACCEPTABLE" | "LOW" | "UNKNOWN" | string;
+  total_compensation_score?: number;
+  compensation_json?: any;
   created_at: string;
   skills: JobSkill[];
 }

@@ -18,10 +18,19 @@ class CandidateProfile(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     target_title: Mapped[str] = mapped_column(String(255), nullable=False, default="Senior / Lead BI & Analytics Engineer")
     target_seniority: Mapped[str] = mapped_column(String(50), nullable=False, default="SENIOR")
+    
+    # KUBERA Compensation & Opportunity Policy
     target_comp_min: Mapped[int] = mapped_column(Integer, nullable=False, default=160000)
+    target_comp_preferred: Mapped[int] = mapped_column(Integer, nullable=False, default=195000)
     target_comp_max: Mapped[int] = mapped_column(Integer, nullable=False, default=230000)
+    currency: Mapped[str] = mapped_column(String(10), nullable=False, default="USD")
+    remote_preference: Mapped[str] = mapped_column(String(50), nullable=False, default="REMOTE_FIRST")
+    international_preference: Mapped[str] = mapped_column(String(50), nullable=False, default="US_ONLY")
+    visa_sponsorship_required: Mapped[str] = mapped_column(String(50), nullable=False, default="NO")
+    employment_type_preference: Mapped[str] = mapped_column(String(50), nullable=False, default="FULL_TIME")
+    
     work_auth_status: Mapped[str] = mapped_column(String(100), nullable=False, default="US_CITIZEN")
-    preferred_locations: Mapped[list] = mapped_column(JSON, default=lambda: ["Remote US", "San Francisco, CA", "New York, NY"])
+    preferred_locations: Mapped[list] = mapped_column(JSON, default=lambda: ["Remote US", "San Francisco, CA", "New York, NY", "Seattle, WA"])
     raw_bio: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
@@ -37,7 +46,6 @@ class EvidenceItem(Base):
     category: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     # TECH_SKILL, BUSINESS_IMPACT, ARCHITECTURE_PROJECT, LEADERSHIP_MANAGEMENT, CERTIFICATION
     skill_or_tool: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    # e.g. SQL, Snowflake, dbt, Looker, Python, Power BI, Databricks, Azure, AWS, BigQuery, Tableau, Data Modeling
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     evidence_text: Mapped[str] = mapped_column(Text, nullable=False)
     
@@ -47,7 +55,7 @@ class EvidenceItem(Base):
     action: Mapped[str] = mapped_column(Text, nullable=True)
     result: Mapped[str] = mapped_column(Text, nullable=True)
     
-    quant_metric: Mapped[str] = mapped_column(String(255), nullable=True)  # e.g. "$140k/yr compute cost reduction"
+    quant_metric: Mapped[str] = mapped_column(String(255), nullable=True)
     source_company: Mapped[str] = mapped_column(String(255), nullable=True)
     timeframe_start: Mapped[str] = mapped_column(String(50), nullable=True)
     timeframe_end: Mapped[str] = mapped_column(String(50), nullable=True)

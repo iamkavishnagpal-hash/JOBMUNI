@@ -78,6 +78,49 @@ async def delete_evidence_item(evidence_id: str, db: AsyncSession = Depends(get_
         raise HTTPException(status_code=404, detail="Evidence item not found")
     return None
 
+@evidence_router.get("/candidate/compensation-policy")
+async def get_compensation_policy(db: AsyncSession = Depends(get_db)):
+    profile = await saraswati_service.get_or_create_default_profile(db)
+    return {
+        "target_comp_min": profile.target_comp_min,
+        "target_comp_preferred": profile.target_comp_preferred,
+        "target_comp_max": profile.target_comp_max,
+        "currency": profile.currency,
+        "remote_preference": profile.remote_preference,
+        "international_preference": profile.international_preference,
+        "visa_sponsorship_required": profile.visa_sponsorship_required,
+        "employment_type_preference": profile.employment_type_preference,
+        "preferred_locations": profile.preferred_locations,
+    }
+
+@evidence_router.put("/candidate/compensation-policy")
+async def update_compensation_policy(
+    policy_in: dict,
+    db: AsyncSession = Depends(get_db)
+):
+    profile = await saraswati_service.get_or_create_default_profile(db)
+    for field in [
+        "target_comp_min", "target_comp_preferred", "target_comp_max",
+        "currency", "remote_preference", "international_preference",
+        "visa_sponsorship_required", "employment_type_preference", "preferred_locations"
+    ]:
+        if field in policy_in and policy_in[field] is not None:
+            setattr(profile, field, policy_in[field])
+
+    await db.commit()
+    await db.refresh(profile)
+    return {
+        "target_comp_min": profile.target_comp_min,
+        "target_comp_preferred": profile.target_comp_preferred,
+        "target_comp_max": profile.target_comp_max,
+        "currency": profile.currency,
+        "remote_preference": profile.remote_preference,
+        "international_preference": profile.international_preference,
+        "visa_sponsorship_required": profile.visa_sponsorship_required,
+        "employment_type_preference": profile.employment_type_preference,
+        "preferred_locations": profile.preferred_locations,
+    }
+
 # --- SETTINGS / INTEGRATIONS ---
 @settings_router.get("/integrations")
 async def get_integrations_status():

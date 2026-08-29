@@ -23,7 +23,7 @@ test.describe("Phase 3B: ARJUNA JD Alignment E2E Verification", () => {
 
     const jobCard = page.locator(".cursor-pointer").first();
     await expect(jobCard).toBeVisible();
-    await expect(page.getByText(/View ARJUNA Fit/i).first()).toBeVisible();
+    await expect(page.getByText(/View Intelligence/i).first()).toBeVisible();
   });
 
   test("Clicking job card opens ARJUNA Precision Alignment Modal with gauges and reasoning", async ({ page }) => {
@@ -31,8 +31,8 @@ test.describe("Phase 3B: ARJUNA JD Alignment E2E Verification", () => {
     const jobCard = page.locator(".cursor-pointer").first();
     await jobCard.click();
 
-    // Verify modal header
-    await expect(page.getByText(/ARJUNA Precision Alignment/i)).toBeVisible();
+    // Verify tab switcher
+    await expect(page.getByRole("button", { name: /ARJUNA Skill Fit/i })).toBeVisible();
 
     // Verify 4 coverage gauges
     await expect(page.getByText("Required Coverage")).toBeVisible();
@@ -41,7 +41,7 @@ test.describe("Phase 3B: ARJUNA JD Alignment E2E Verification", () => {
     await expect(page.getByText("Seniority Fit")).toBeVisible();
 
     // Verify Explainable Rationale
-    await expect(page.getByText("Explainable Rationale & Recommended Action")).toBeVisible();
+    await expect(page.getByText("Explainable Rationale & Action")).toBeVisible();
     await expect(page.getByText(/Action:/i)).toBeVisible();
 
     // Verify Matched Skills Section

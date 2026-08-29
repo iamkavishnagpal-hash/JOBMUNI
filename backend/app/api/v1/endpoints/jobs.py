@@ -5,7 +5,7 @@ from sqlalchemy import select, desc, func, or_
 from app.core.database import get_db
 from app.models.job import Job, JobSkill, Company
 from app.models.scoring_config import ScoringConfig
-from app.schemas.job import JobResponse, JobCreate, JobManualParseRequest, JobPaginationResponse, JobAlignmentResponse
+from app.schemas.job import JobResponse, JobCreate, JobManualParseRequest, JobPaginationResponse, JobAlignmentResponse, JobCompensationResponse
 from app.services.jd_parser import JDParser
 from app.services.scoring_service import OpportunityScorer
 from app.services.verification_service import YamaVerificationService
@@ -178,4 +178,30 @@ async def evaluate_job_alignment_endpoint(job_id: str, db: AsyncSession = Depend
     if not alignment:
         raise HTTPException(status_code=404, detail="Job not found")
     return alignment
+
+@router.get("/{job_id}/compensation", response_model=JobCompensationResponse)
+async def get_job_compensation_endpoint(job_id: str, db: AsyncSession = Depends(get_db)):
+    from app.services.compensation_service import kubera_service
+    result = await db.execute(select(Job).where(Job.id == job_id))
+    job = result.scalars().first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    # If compensation is already cached in compensation_json and valid, return it; otherwise evaluate and persist
+    if job.compensation_json and job.compensation_json.get("compensation_tier") is not None:
+        return job.compensation_json
+
+    comp_res = await kubera_service.evaluate_and_persist_job_compensation(db, job_id)
+    if not comp_res:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return comp_res
+
+@router.post("/{job_id}/compensation", response_model=JobCompensationResponse)
+async def evaluate_job_compensation_endpoint(job_id: str, db: AsyncSession = Depends(get_db)):
+    from app.services.compensation_service import kubera_service
+    comp_res = await kubera_service.evaluate_and_persist_job_compensation(db, job_id)
+    if not comp_res:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return comp_res
+
 

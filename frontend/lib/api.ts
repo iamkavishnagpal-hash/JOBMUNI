@@ -59,6 +59,17 @@ export const api = {
     fetchJson<any>(`/jobs/${jobId}/alignment`, {
       method: "POST",
     }),
+  getJobCompensation: (jobId: string) => fetchJson<any>(`/jobs/${jobId}/compensation`),
+  evaluateJobCompensation: (jobId: string) =>
+    fetchJson<any>(`/jobs/${jobId}/compensation`, {
+      method: "POST",
+    }),
+  getCompensationPolicy: () => fetchJson<any>("/evidence-bank/candidate/compensation-policy"),
+  updateCompensationPolicy: (data: any) =>
+    fetchJson<any>("/evidence-bank/candidate/compensation-policy", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
 
   // Recruiters
   getRecruiters: () => fetchJson<Recruiter[]>("/recruiters"),
