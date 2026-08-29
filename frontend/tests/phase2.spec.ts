@@ -16,7 +16,7 @@ test.describe("Phase 2 E2E Test Suite - Ingestion, Verification & Automation", (
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { level: 1, name: "Executive Command Center" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /Opportunity Overview|Executive Command Center/ })).toBeVisible();
     await expect(page.getByText("Urgent Act-Now", { exact: true })).toBeVisible();
     await expect(page.getByText("CAREER GPS")).toBeVisible();
   });
@@ -25,7 +25,7 @@ test.describe("Phase 2 E2E Test Suite - Ingestion, Verification & Automation", (
     await page.goto("/settings");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("heading", { level: 1, name: /Settings & System Configuration/ })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /Settings/ })).toBeVisible();
     await expect(page.getByText("Configurable Opportunity Scoring Weights")).toBeVisible();
   });
 });

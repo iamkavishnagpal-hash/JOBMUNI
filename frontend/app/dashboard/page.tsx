@@ -45,8 +45,8 @@ export default function DashboardPage() {
   return (
     <div>
       <Header
-        title="Executive Command Center"
-        subtitle="Operational cockpit for Senior Data, BI & Analytics opportunities"
+        title="Opportunity Overview"
+        subtitle="Active pipeline, verified priorities, and daily recommended actions"
         actionButton={{
           label: "Refresh Metrics",
           onClick: loadSummary,

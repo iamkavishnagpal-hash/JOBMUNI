@@ -36,15 +36,15 @@ export function AppSidebar() {
       <div>
         {/* Brand Logo & Senior Title */}
         <Link href="/dashboard" className="flex items-center gap-3 px-3 mb-8 group">
-          <div className="w-8 h-8 rounded-xl bg-accent-indigo/20 border border-accent-indigo/40 flex items-center justify-center text-accent-indigo font-bold text-sm shadow-inner group-hover:scale-105 transition-transform">
-            K
+          <div className="w-8 h-8 rounded-xl bg-accent-indigo/20 border border-accent-indigo/40 flex items-center justify-center text-accent-indigo font-bold text-xs shadow-inner group-hover:scale-105 transition-transform">
+            JM
           </div>
           <div>
             <div className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-              Kavish Career OS
+              JOBMUNI
             </div>
             <div className="text-[11px] font-mono text-gray-500 uppercase tracking-wider">
-              Senior BI & Analytics
+              Career Data Platform
             </div>
           </div>
         </Link>

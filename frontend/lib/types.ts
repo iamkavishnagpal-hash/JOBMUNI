@@ -60,9 +60,11 @@ export interface Job {
   evidence_coverage_pct?: number;
   experience_alignment_pct?: number;
   alignment_json?: any;
+  arjuna_match_json?: any;
   compensation_tier?: "PREMIUM" | "STRONG" | "ACCEPTABLE" | "LOW" | "UNKNOWN" | string;
   total_compensation_score?: number;
   compensation_json?: any;
+  kubera_comp_json?: any;
   priority_score?: number;
   urgency_score?: number;
   actionability?: "READY_TO_ACT" | "NEEDS_RESUME" | "NEEDS_EVIDENCE" | "NEEDS_RECRUITER_OUTREACH" | "NEEDS_REVIEW" | "BLOCKED" | "EXPIRED" | string;

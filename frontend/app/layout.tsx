@@ -4,8 +4,8 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MobileNavBar } from "@/components/layout/MobileNavBar";
 
 export const metadata: Metadata = {
-  title: "Kavish Career OS — Executive Operating System",
-  description: "Personal Career Operating System for Senior Data, BI & Analytics Leaders",
+  title: "JOBMUNI — Career Intelligence & Decision Platform",
+  description: "Deterministic career discovery, verification, and opportunity prioritization platform.",
 };
 
 export default function RootLayout({
