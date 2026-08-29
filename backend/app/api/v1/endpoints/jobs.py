@@ -92,6 +92,7 @@ async def manual_parse_job(
         raw_description=request.raw_text,
         status="ACTIVE",
         verification_status="ACTIVE",
+        verification_reason="EXACT_JOB_FOUND",
         ghost_signal_score=0,
         ghost_signal_reasons=[],
         ghost_status="ACTIVE",

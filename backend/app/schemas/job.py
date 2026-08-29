@@ -51,6 +51,7 @@ class JobResponse(JobBase):
     verification_status: str = "UNKNOWN"
     verification_error: Optional[str] = None
     verification_http_status: Optional[int] = None
+    verification_reason: Optional[str] = None
     ghost_signal_score: int = 0
     ghost_signal_reasons: List[str] = []
     ghost_status: str = "ACTIVE"

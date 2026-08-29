@@ -91,6 +91,7 @@ class NaradaDiscoveryService:
                     existing_job.last_verified_at = datetime.now(timezone.utc)
                     existing_job.last_http_status = 200
                     existing_job.verification_status = "ACTIVE"
+                    existing_job.verification_reason = "EXACT_JOB_FOUND"
                     
                     # Update fields if refreshed
                     if item.raw_description and existing_job.raw_description_hash != desc_hash:
@@ -145,6 +146,7 @@ class NaradaDiscoveryService:
                         last_http_status=200,
                         status="ACTIVE",
                         verification_status="ACTIVE",
+                        verification_reason="EXACT_JOB_FOUND",
                         ghost_signal_score=0,
                         ghost_signal_reasons=[],
                         ghost_status="ACTIVE",

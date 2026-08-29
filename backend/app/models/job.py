@@ -70,6 +70,8 @@ class Job(Base):
     # ACTIVE, INACTIVE, UNKNOWN, ERROR
     verification_error: Mapped[str] = mapped_column(Text, nullable=True)
     verification_http_status: Mapped[int] = mapped_column(Integer, nullable=True)
+    verification_reason: Mapped[str] = mapped_column(String(100), nullable=True)
+    # EXACT_JOB_FOUND, EXACT_JOB_NOT_FOUND, REDIRECTED_TO_GENERIC_CAREERS, TEMPORARY_SERVER_ERROR, TIMEOUT, NETWORK_ERROR, AMBIGUOUS, JOB_EXPIRED_ON_PAGE
     
     ghost_signal_score: Mapped[int] = mapped_column(Integer, default=0)
     ghost_signal_reasons: Mapped[list] = mapped_column(JSON, default=list)
