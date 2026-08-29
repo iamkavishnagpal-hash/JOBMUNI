@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Job Radar", href: "/jobs", icon: Radar },
+  { label: "Evidence Bank", href: "/evidence-bank", icon: ShieldCheck },
   { label: "Recruiter CRM", href: "/recruiters", icon: Users },
   { label: "Applications", href: "/applications", icon: Briefcase },
   { label: "Interviews", href: "/interviews", icon: Calendar },

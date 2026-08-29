@@ -29,6 +29,7 @@ export interface Job {
   location: string;
   remote_type: string;
   source_url?: string;
+  canonical_url?: string;
   salary_min?: number;
   salary_max?: number;
   salary_currency: string;
@@ -39,7 +40,14 @@ export interface Job {
   first_seen_at: string;
   last_verified_at: string;
   last_http_status: number;
-  status: "ACTIVE" | "STALE" | "CLOSED" | "UNKNOWN";
+  status: "ACTIVE" | "STALE" | "CLOSED" | "INACTIVE" | "UNKNOWN";
+  verification_status: "ACTIVE" | "INACTIVE" | "UNKNOWN" | "ERROR";
+  verification_reason?: string;
+  verification_error?: string;
+  verification_http_status?: number;
+  ghost_signal_score: number;
+  ghost_signal_reasons: string[];
+  ghost_status: "ACTIVE" | "STALE" | "LIKELY_INACTIVE" | "UNKNOWN";
   freshness_conf: number;
   hiring_signal_score: number;
   hiring_signal_tier: "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
@@ -58,10 +66,9 @@ export interface Recruiter {
   email?: string;
   linkedin_url?: string;
   relationship_status: string;
-  engagement_score: number;
-  first_contact?: string;
-  last_contact?: string;
-  followup_due_date?: string;
+  hiring_authority_tier: string;
+  engagement_score?: number;
+  last_contacted_at?: string;
   notes?: string;
   created_at: string;
 }
@@ -69,28 +76,37 @@ export interface Recruiter {
 export interface Application {
   id: string;
   job_id: string;
-  recruiter_id?: string;
-  status: string;
-  jd_alignment_score: number;
+  job_title?: string;
+  company_name?: string;
+  stage: string;
+  status?: string;
+  jd_alignment_score?: number;
   applied_date?: string;
-  referral_source?: string;
+  target_salary_offered?: number;
   notes?: string;
   created_at: string;
 }
 
 export interface ApprovalRequest {
   id: string;
-  action_type: string;
-  autonomy_level: number;
+  request_type?: "OUTREACH_EMAIL" | "LINKEDIN_MESSAGE" | "RESUME_CUSTOMIZATION" | "AUTONOMOUS_ACTION";
+  action_type?: string;
   title: string;
-  reason: string;
-  generated_content: {
+  summary: string;
+  reason?: string;
+  proposed_content?: {
     subject?: string;
     body?: string;
     recipient?: string;
     [key: string]: any;
   };
-  supporting_evidence: any[];
+  generated_content?: {
+    subject?: string;
+    body?: string;
+    recipient?: string;
+    [key: string]: any;
+  };
+  supporting_evidence?: any[];
   status: "PENDING" | "APPROVED" | "REJECTED" | "EDITED_AND_APPROVED";
   decision_at?: string;
   rejection_reason?: string;
@@ -131,4 +147,41 @@ export interface IntegrationsStatus {
     host: string;
     status: string;
   };
+}
+
+export interface EvidenceItem {
+  id: string;
+  profile_id: string;
+  category: "TECH_SKILL" | "BUSINESS_IMPACT" | "ARCHITECTURE_PROJECT" | "LEADERSHIP_MANAGEMENT" | "CERTIFICATION";
+  skill_or_tool: string;
+  title: string;
+  evidence_text: string;
+  situation?: string;
+  task?: string;
+  action?: string;
+  result?: string;
+  quant_metric?: string;
+  source_company?: string;
+  timeframe_start?: string;
+  timeframe_end?: string;
+  tags: string[];
+  confidence: number;
+  verified_by_user: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SkillSummaryItem {
+  skill_name: string;
+  evidence_count: number;
+  categories: string[];
+  top_metrics: string[];
+  evidence_ids: string[];
+}
+
+export interface SkillsSummary {
+  total_skills: number;
+  total_evidence_items: number;
+  skills: SkillSummaryItem[];
 }

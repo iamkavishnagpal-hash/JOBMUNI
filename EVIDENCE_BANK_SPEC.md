@@ -1,40 +1,45 @@
-# Kavish Career OS — Evidence Bank (Truth Engine) Specification
+# JOBMUNI — SARASWATI Candidate Evidence Bank Specification
 
-## 1. Objective & Philosophy
-The **Evidence Bank** is the immutable repository of verified facts, career achievements, project metrics, and technical expertise for the candidate.
+## 1. Objective
 
-### The Factual Integrity Mandate
-- **Zero Hallucination Rule**: When generating tailored resumes, cover letters, outreach emails, or interview talking points, the AI provider is strictly constrained via prompt engineering and RAG retrieval to use **only** facts present in the Evidence Bank.
-- If a JD asks for a tool (e.g. `Kubernetes`) that is not present in the candidate's Evidence Bank, the system **explicitly flags the gap in JD Alignment Score** rather than inventing fake experience.
+The **Candidate Evidence Bank (SARASWATI)** serves as the authoritative source of truth for the candidate's professional career history, technical skills, quantifiable business metrics, and project accomplishments.
 
----
-
-## 2. Evidence Taxonomy
-
-```
-[Candidate Master Profile]
-       ├── METRICS (e.g. "$2.4M cloud spend reduction", "45ms p99 query latency")
-       ├── PROJECTS (e.g. "Enterprise Snowflake Migration", "dbt Semantic Layer Rollout")
-       ├── LEADERSHIP (e.g. "Mentored 6 BI Engineers", "Led cross-functional stakeholder syncs")
-       ├── TECH_STACK (e.g. "SQL Expert", "dbt Core/Cloud", "Tableau", "Looker", "BigQuery")
-       └── DOMAINS (e.g. "FinTech Risk Analytics", "E-Commerce Funnel Optimization", "SaaS B2B")
-```
+**Zero Invention Policy**: All downstream matching, scoring, resume customization, and recruiter communications must link strictly to valid, verified evidence records in this bank.
 
 ---
 
-## 3. Storage & Retrieval Pattern
-Each evidence record contains:
-```json
-{
-  "id": "evid-001",
-  "category": "METRIC",
-  "skill_or_tool": "Snowflake",
-  "title": "Optimized multi-cluster warehouse cost",
-  "evidence_text": "Architected auto-suspend and query-clustering policies across 14 BI pipelines, reducing monthly compute spend by 38% ($14,000/mo) while sustaining sub-second dashboard latencies.",
-  "quant_metric": "38% compute cost reduction ($168k/yr)",
-  "source_company": "Acme Analytics Corp",
-  "confidence": 1.0
-}
-```
+## 2. Evidence Model & Taxonomy
 
-When evaluating a job description, the system extracts the JD's required skills, queries the Evidence Bank via semantic and exact keyword match, and computes the **Evidence Coverage Ratio**.
+### Categories
+1. `TECH_SKILL`: Specific proficiency in tools/languages (e.g. `SQL`, `Snowflake`, `dbt`, `Looker`, `Python`, `Power BI`, `Databricks`, `Azure`, `AWS`, `GCP`).
+2. `BUSINESS_IMPACT`: Measured quantitative results (e.g. `$1.2M annual cloud compute cost reduction`, `45% faster dashboard query SLA`).
+3. `ARCHITECTURE_PROJECT`: End-to-end data platform delivery (e.g. `Modern Data Stack migration from on-prem SQL Server to Snowflake`).
+4. `LEADERSHIP_MANAGEMENT`: Mentorship, stakeholder management, cross-functional collaboration.
+5. `CERTIFICATION`: Verified credentials (e.g. `Snowflake SnowPro Core`, `dbt Certified Developer`).
+
+### Schema Definition (`evidence_items`)
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `VARCHAR(36)` (UUID) | Unique Evidence ID |
+| `profile_id` | `VARCHAR(36)` | Candidate Profile Reference |
+| `category` | `VARCHAR(50)` | Category enum |
+| `skill_or_tool` | `VARCHAR(100)` | Primary associated skill (normalized taxonomy) |
+| `title` | `VARCHAR(255)` | Short descriptive headline |
+| `evidence_text` | `TEXT` | Full STAR description (Situation, Task, Action, Result) |
+| `quant_metric` | `VARCHAR(255)` | Explicit quantified metric string |
+| `source_company` | `VARCHAR(255)` | Company where achievement occurred |
+| `timeframe_start` | `DATE` / `VARCHAR(50)` | Period of execution |
+| `timeframe_end` | `DATE` / `VARCHAR(50)` | Period of execution |
+| `confidence` | `FLOAT` | Reliability rating (default 1.0) |
+| `verified_by_user` | `BOOLEAN` | User has audited and confirmed accuracy |
+
+---
+
+## 3. Evidence API Contract
+
+- `GET /api/v1/evidence-bank`: List all candidate evidence items (supports filtering by `category`, `skill_or_tool`, `search`).
+- `POST /api/v1/evidence-bank`: Create new evidence item with mandatory metrics and text validation.
+- `GET /api/v1/evidence-bank/{id}`: Retrieve single evidence item with linked job matches.
+- `PUT /api/v1/evidence-bank/{id}`: Update evidence item.
+- `DELETE /api/v1/evidence-bank/{id}`: Soft delete / remove evidence item.
+- `GET /api/v1/evidence-bank/skills-summary`: Returns matrix of verified skills with evidence counts and top metrics.

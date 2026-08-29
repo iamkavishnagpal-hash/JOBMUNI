@@ -89,4 +89,28 @@ export const api = {
 
   // Integrations Settings
   getIntegrations: () => fetchJson<IntegrationsStatus>("/settings/integrations"),
+
+  // Evidence Bank (SARASWATI)
+  getEvidenceItems: (params?: { category?: string; skill_or_tool?: string; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.category) searchParams.set("category", params.category);
+    if (params?.skill_or_tool) searchParams.set("skill_or_tool", params.skill_or_tool);
+    if (params?.search) searchParams.set("search", params.search);
+    const qs = searchParams.toString();
+    return fetchJson<any[]>(`/evidence-bank${qs ? `?${qs}` : ""}`);
+  },
+  getSkillsSummary: () => fetchJson<any>("/evidence-bank/skills/summary"),
+  createEvidenceItem: (data: any) =>
+    fetchJson<any>("/evidence-bank", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  deleteEvidenceItem: (id: string) =>
+    fetchJson<void>(`/evidence-bank/${id}`, {
+      method: "DELETE",
+    }),
+  seedEvidenceBank: () =>
+    fetchJson<{ status: string; created_count?: number }>("/evidence-bank/seed", {
+      method: "POST",
+    }),
 };
