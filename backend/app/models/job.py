@@ -57,13 +57,25 @@ class Job(Base):
     remote_type: Mapped[str] = mapped_column(String(50), default="REMOTE")
     source_id: Mapped[str] = mapped_column(String(36), ForeignKey("job_sources.id", ondelete="SET NULL"), nullable=True)
     source_url: Mapped[str] = mapped_column(String(1024), nullable=True, index=True)
-    source_job_id: Mapped[str] = mapped_column(String(255), nullable=True)
+    canonical_url: Mapped[str] = mapped_column(String(1024), nullable=True, index=True)
+    source_job_id: Mapped[str] = mapped_column(String(255), nullable=True, index=True)
     
     posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     last_verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     last_http_status: Mapped[int] = mapped_column(Integer, default=200)
+    
     status: Mapped[str] = mapped_column(String(50), default="ACTIVE", index=True)
+    verification_status: Mapped[str] = mapped_column(String(50), default="UNKNOWN", index=True)
+    # ACTIVE, INACTIVE, UNKNOWN, ERROR
+    verification_error: Mapped[str] = mapped_column(Text, nullable=True)
+    verification_http_status: Mapped[int] = mapped_column(Integer, nullable=True)
+    
+    ghost_signal_score: Mapped[int] = mapped_column(Integer, default=0)
+    ghost_signal_reasons: Mapped[list] = mapped_column(JSON, default=list)
+    ghost_status: Mapped[str] = mapped_column(String(50), default="ACTIVE", index=True)
+    # ACTIVE, STALE, LIKELY_INACTIVE, UNKNOWN
+    
     freshness_conf: Mapped[float] = mapped_column(Float, default=1.0)
     
     salary_min: Mapped[int] = mapped_column(Integer, nullable=True)
@@ -72,6 +84,7 @@ class Job(Base):
     seniority_level: Mapped[str] = mapped_column(String(50), default="SENIOR")
     domain_category: Mapped[str] = mapped_column(String(100), default="BI_ANALYTICS")
     raw_description: Mapped[str] = mapped_column(Text, nullable=True)
+    raw_description_hash: Mapped[str] = mapped_column(String(64), nullable=True, index=True)
     
     hiring_signal_score: Mapped[int] = mapped_column(Integer, default=75)
     hiring_signal_tier: Mapped[str] = mapped_column(String(50), default="HIGH")

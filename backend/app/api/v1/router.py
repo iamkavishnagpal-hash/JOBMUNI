@@ -12,6 +12,7 @@ from app.api.v1.endpoints.evidence_bank import (
     evidence_router,
     settings_router
 )
+from app.api.v1.endpoints.automation import router as automation_router
 
 api_router = APIRouter()
 
@@ -24,3 +25,4 @@ api_router.include_router(approvals_router, prefix="/approvals", tags=["Approval
 api_router.include_router(evidence_router, prefix="/evidence-bank", tags=["Evidence Bank"])
 api_router.include_router(scoring_config_router, prefix="/scoring-config", tags=["Scoring Config"])
 api_router.include_router(settings_router, prefix="/settings", tags=["Settings"])
+api_router.include_router(automation_router, prefix="/automation-runs", tags=["Automation Runs"])

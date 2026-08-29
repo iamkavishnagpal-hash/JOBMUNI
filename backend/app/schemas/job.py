@@ -20,6 +20,7 @@ class JobBase(BaseModel):
     location: Optional[str] = "Remote, US"
     remote_type: str = "REMOTE"
     source_url: Optional[str] = None
+    canonical_url: Optional[str] = None
     source_job_id: Optional[str] = None
     salary_min: Optional[int] = None
     salary_max: Optional[int] = None
@@ -47,6 +48,12 @@ class JobResponse(JobBase):
     last_verified_at: datetime
     last_http_status: int = 200
     status: str = "ACTIVE"
+    verification_status: str = "UNKNOWN"
+    verification_error: Optional[str] = None
+    verification_http_status: Optional[int] = None
+    ghost_signal_score: int = 0
+    ghost_signal_reasons: List[str] = []
+    ghost_status: str = "ACTIVE"
     freshness_conf: float = 1.0
     hiring_signal_score: int = 75
     hiring_signal_tier: str = "HIGH"
@@ -58,3 +65,11 @@ class JobResponse(JobBase):
     skills: List[JobSkillResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+class JobPaginationResponse(BaseModel):
+    items: List[JobResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
+

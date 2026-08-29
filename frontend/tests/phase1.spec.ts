@@ -17,7 +17,7 @@ test.describe("Phase 1 E2E Test Suite - Kavish Career OS", () => {
     await page.goto("/dashboard");
     await page.waitForLoadState("networkidle");
     await expect(page.getByRole("heading", { level: 1, name: "Executive Command Center" })).toBeVisible();
-    await expect(page.getByText("Urgent Act-Now", { exact: false })).toBeVisible();
+    await expect(page.getByText("Urgent Act-Now", { exact: true })).toBeVisible();
     await expect(page.getByText("CAREER GPS")).toBeVisible();
     await expect(page.getByRole("button", { name: "Refresh Metrics" })).toBeVisible();
   });

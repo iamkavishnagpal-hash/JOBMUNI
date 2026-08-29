@@ -14,14 +14,25 @@ class AutomationRun(Base):
     __tablename__ = "automation_runs"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    task_name: Mapped[str] = mapped_column(String(100), default="GENERIC_TASK", index=True)
     task_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    # JOB_DISCOVERY, FRESHNESS_VERIFY, SCORING_REFRESH, SHEETS_SYNC, CAREER_GPS_EVAL, FOLLOWUP_CHECK
+    # JOB_DISCOVERY, FRESHNESS_VERIFY, GHOST_DETECTION, SCORING_REFRESH, SHEETS_SYNC
+    
+    agent_name: Mapped[str] = mapped_column(String(100), default="BRAHMASTRA", index=True)
+    # NARADA, YAMA, CHANAKYA, etc.
     
     status: Mapped[str] = mapped_column(String(50), default="SUCCESS", index=True)  # SUCCESS, RUNNING, FAILED, PARTIAL
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     finished_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    
     items_processed: Mapped[int] = mapped_column(Integer, default=0)
+    records_processed: Mapped[int] = mapped_column(Integer, default=0)
+    records_created: Mapped[int] = mapped_column(Integer, default=0)
+    records_updated: Mapped[int] = mapped_column(Integer, default=0)
+    records_failed: Mapped[int] = mapped_column(Integer, default=0)
+    retry_count: Mapped[int] = mapped_column(Integer, default=0)
+    
     error_message: Mapped[str] = mapped_column(Text, nullable=True)
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
 
