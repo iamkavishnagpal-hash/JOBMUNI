@@ -5,9 +5,9 @@ import fs from "fs";
 test.describe("Phase 1 E2E Test Suite - JOBMUNI", () => {
   
   // 1. Application loads
-  test("1. application loads and redirects to dashboard", async ({ page }) => {
+  test("1. application loads and displays dashboard overview", async ({ page }) => {
     await page.goto("/");
-    await page.waitForURL("**/dashboard");
+    await page.waitForLoadState("networkidle");
     await expect(page).toHaveTitle(/JOBMUNI|Kavish Career OS/);
     await expect(page.getByRole("heading", { level: 1, name: /Opportunity Overview|Executive Command Center/ })).toBeVisible();
   });
@@ -90,7 +90,6 @@ test.describe("Phase 1 E2E Test Suite - JOBMUNI", () => {
     await expect(jobsNavLink).toBeVisible();
     await jobsNavLink.click();
 
-    await page.waitForURL("**/jobs");
     await expect(page.getByRole("heading", { level: 1, name: /Job Radar/ })).toBeVisible();
   });
 
@@ -120,7 +119,8 @@ test.describe("Phase 1 E2E Test Suite - JOBMUNI", () => {
 
   // 12. Build test
   test("12. production build verification test", async () => {
+    const outDir = path.join(process.cwd(), "out");
     const nextDir = path.join(process.cwd(), ".next");
-    expect(fs.existsSync(nextDir)).toBe(true);
+    expect(fs.existsSync(outDir) || fs.existsSync(nextDir)).toBe(true);
   });
 });

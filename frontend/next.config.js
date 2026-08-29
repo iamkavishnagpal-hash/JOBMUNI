@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  output: "export",
+  trailingSlash: false,
+  images: {
+    unoptimized: true,
+  },
 };
 
 module.exports = nextConfig;

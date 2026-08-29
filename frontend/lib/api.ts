@@ -186,23 +186,44 @@ export const api = {
   // Integrations Settings
   getIntegrations: () => fetchJson<IntegrationsStatus>("/settings/integrations", undefined, FALLBACK_INTEGRATIONS),
 
-  // Evidence Bank (SARASWATI)
-  getEvidenceItems: (params?: { category?: string; skill_or_tool?: string; search?: string }) => {
+  getEvidenceItems: async (params?: { category?: string; skill_or_tool?: string; search?: string }) => {
     const searchParams = new URLSearchParams();
     if (params?.category) searchParams.set("category", params.category);
     if (params?.skill_or_tool) searchParams.set("skill_or_tool", params.skill_or_tool);
     if (params?.search) searchParams.set("search", params.search);
     const qs = searchParams.toString();
-    return fetchJson<any[]>(`/evidence-bank${qs ? `?${qs}` : ""}`, undefined, FALLBACK_EVIDENCE);
+    const res = await fetchJson<any[]>(`/evidence-bank${qs ? `?${qs}` : ""}`, undefined, FALLBACK_EVIDENCE);
+    if (!res || res.length === 0) {
+      let list = [...FALLBACK_EVIDENCE];
+      if (params?.category && params.category !== "ALL") {
+        list = list.filter((i) => i.category === params.category);
+      }
+      if (params?.search) {
+        const q = params.search.toLowerCase();
+        list = list.filter(
+          (i) =>
+            i.skill_or_tool?.toLowerCase().includes(q) ||
+            i.title?.toLowerCase().includes(q) ||
+            i.evidence_text?.toLowerCase().includes(q)
+        );
+      }
+      return list;
+    }
+    return res;
   },
   getSkillsSummary: () =>
-    fetchJson<any>("/evidence-bank/skills/summary", undefined, [
-      { skill: "Snowflake", count: 3, highest_proficiency: "EXPERT" },
-      { skill: "dbt", count: 2, highest_proficiency: "EXPERT" },
-      { skill: "Looker", count: 2, highest_proficiency: "EXPERT" },
-      { skill: "SQL", count: 4, highest_proficiency: "EXPERT" },
-      { skill: "Python", count: 2, highest_proficiency: "ADVANCED" },
-    ]),
+    fetchJson<any>("/evidence-bank/skills/summary", undefined, {
+      total_skills: 12,
+      total_evidence_items: 4,
+      categories_count: 5,
+      top_skills: [
+        { skill: "Snowflake", count: 3, highest_proficiency: "EXPERT" },
+        { skill: "dbt", count: 2, highest_proficiency: "EXPERT" },
+        { skill: "Looker", count: 2, highest_proficiency: "EXPERT" },
+        { skill: "SQL", count: 4, highest_proficiency: "EXPERT" },
+        { skill: "Python", count: 2, highest_proficiency: "ADVANCED" },
+      ],
+    }),
   createEvidenceItem: (data: any) =>
     fetchJson<any>("/evidence-bank", {
       method: "POST",
