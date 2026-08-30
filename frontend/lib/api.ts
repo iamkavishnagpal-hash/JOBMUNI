@@ -18,7 +18,7 @@ import {
   FALLBACK_INTEGRATIONS,
 } from "./fallbackData";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""; // Use relative base in Vercel deployment
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api"; // Use local proxy in Vercel deployment
 
 async function fetchJson<T>(endpoint: string, options?: RequestInit, fallback?: T): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
