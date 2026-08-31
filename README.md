@@ -1,4 +1,4 @@
-# JOBMUNI
+# JOBMUNI🧘‍♂️
 
 A personal career discovery and execution engine built on data engineering principles.
 
